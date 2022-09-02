@@ -35,6 +35,9 @@ services:
 				node2
 				relation
 
+    type-action service:
+    	person:
+    		
 
 
 	ticket service:
