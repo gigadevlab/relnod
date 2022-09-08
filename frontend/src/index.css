@@ -14,10 +14,13 @@ code {
 
 #network-container {
   grid-area: lt;
-  height: 600px;
-  width: 1150px;
-  max-height: 600px;
-  max-width: 1150px;
+  height: 85rem;
+  /*width: 1150px;*/
+  max-height: 57rem;
+  /*max-width: 1150px;*/
+  position: relative;
+  border: 1px solid lightgray;
+  margin: 1rem;
 }
 
 /*#options-container {*/
@@ -30,23 +33,25 @@ code {
 /*}*/
 
 #toolbox-container {
-  grid-area: rt;
+  /*grid-area: rt;*/
   height: 300px;
-  width: 600px;
+  /*width: 400px;*/
   max-height: 300px;
-  max-width: 600px;
+  /*max-width: 400px;*/
   overflow: auto;
   display: inline-block;
+  padding: 1rem;
 }
 
 #actionsMenu-container {
-  grid-area: rb;
+  /*grid-area: rb;*/
   height: 300px;
-  width: 600px;
+  /*width: 400px;*/
   max-height: 300px;
-  max-width: 600px;
+  /*max-width: 400px;*/
   overflow: auto;
   display: inline-block;
+  padding: 1rem;
 }
 
 .grid-container {

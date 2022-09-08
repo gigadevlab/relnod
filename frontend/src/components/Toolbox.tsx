@@ -1,7 +1,8 @@
 import React from 'react';
+import { Avatar, Button, Grid, Stack, TextField } from '@mui/material';
 
 import { MEDIA_URL, typeInfoService } from "../api/services";
-import { Node, Edge, NodeType } from '../constants/types';
+import { Edge, Node, NodeType } from '../constants/types';
 
 import "../static/menu.css";
 
@@ -74,47 +75,44 @@ const Toolbox = (props: ToolboxProps) => {
 
   return (
     <div>
-      <h2>Toolbox</h2>
-      <div className="cards">
+      {/*<h3>CRUD</h3>*/}
+      <Grid container spacing={1}>
         {
           types.map((type) => (
-            <button
-              className="cards__item"
-              aria-details={"Description:" + type.description}
-              onClick={() => handleCreate(type)}
-            >
-              <img src={MEDIA_URL + type.icon} width={32} height={32} style={{objectFit: "contain"}}/>
-              <div style={{display: "inline-block", float: "right"}}>{type.name}</div>
-            </button>
+            <Grid item xs={6}>
+              <Button
+                onClick={() => handleCreate(type)}
+                variant={"outlined"}
+              >
+                <Avatar src={MEDIA_URL + type.icon} sx={{ width: 24, height: 24 }}/>
+                <div style={{display: "inline-block", float: "right"}}>{type.name}</div>
+              </Button>
+            </Grid>
           ))
         }
-      </div>
-      <div style={{margin: "20px", float: "left"}}>
-        <div>
-          <label>Key: </label>
-          <input
-            type="text"
-            name="key"
-            value={key}
-            onChange={(event) => {
-              setKey(event.target.value);
-            }}
-          />
-          {props.selectedNodes.length > 0 &&
-          <button onClick={() => handleDelete(props.selectedNodes)}>Delete</button>
-          }
-          {props.selectedNodes.length > 1 &&
-          <button onClick={() => handleRelate(props.selectedNodes)}>Relate</button>
-          }
-        </div>
-      </div>
-      <div style={{margin: "20px", float: "left"}}>
-        <div>
-          {props.selectedEdges.length > 0 &&
-          <button onClick={() => handleDerelate(props.selectedEdges)}>Delete</button>
-          }
-        </div>
-      </div>
+        <Grid item xs={12}>
+          <Stack direction="column" spacing={1}>
+            <TextField
+              type="text"
+              label="Key"
+              size={"small"}
+              value={key}
+              onChange={(event) => {
+                setKey(event.target.value);
+              }}
+            />
+            {props.selectedNodes.length > 0 &&
+            <Button onClick={() => handleDelete(props.selectedNodes)}>Delete Node</Button>
+            }
+            {props.selectedNodes.length > 1 &&
+            <Button onClick={() => handleRelate(props.selectedNodes)}>Relate Node</Button>
+            }
+            {props.selectedEdges.length > 0 &&
+            <Button onClick={() => handleDerelate(props.selectedEdges)}>Delete Relation</Button>
+            }
+          </Stack>
+        </Grid>
+      </Grid>
     </div>
   );
 };

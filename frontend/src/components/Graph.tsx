@@ -1,8 +1,11 @@
 import React from 'react';
+import { Accordion, AccordionDetails, AccordionSummary, Stack, Typography } from '@mui/material';
 import vis, { Network } from 'vis-network';
 
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+
 import { infoService, MEDIA_URL, relationService } from "../api/services";
-import { Node, Edge } from '../constants/types';
+import { Edge, Node } from '../constants/types';
 
 import Actions from './Actions';
 import Toolbox from './Toolbox';
@@ -231,27 +234,53 @@ const Graph = () => {
   }
 
   return (
-    <div className="grid-container">
+    <div>
       <div ref={networkContainer} id="network-container"/>
       {/*<div ref={optionsContainer} id="options-container"/>*/}
-      <div id="toolbox-container">
-        <Toolbox
-          nextNodeId={nextNodeId}
-          nextEdgeId={nextEdgeId}
-          selectedNodes={selectedNodes}
-          selectedEdges={selectedEdges}
-          onCreateNode={(node: Node) => handleCreateNode(node)}
-          onDeleteNode={(nodesToDel: Node[]) => handleDeleteNode(nodesToDel)}
-          onRelateNode={(newEdges: Edge[]) => handleRelateNode(newEdges)}
-          onDeleteEdge={(edgesToDel: Edge[]) => handleDeleteEdge(edgesToDel)}
-        />
-      </div>
-      <div id="actionsMenu-container">
-        <Actions
-          selectedNodes={selectedNodes}
-        />
-        {/*{popup && <Popup position={{left: popup.left, top: popup.top}} content node={popup.node}/>}*/}
-      </div>
+      <Stack
+        style={{
+          position: "absolute",
+          border: "1px solid lightgray",
+          float: "right",
+          top: "3%",
+          left: "74%",
+          width: "450px"
+        }}
+        direction={"column"}
+        spacing={2}
+      >
+        <Accordion>
+          <AccordionSummary expandIcon={<ExpandMoreIcon/>}>
+            <Typography>Toolbox</Typography>
+          </AccordionSummary>
+          <AccordionDetails>
+            <div id="toolbox-container">
+              <Toolbox
+                nextNodeId={nextNodeId}
+                nextEdgeId={nextEdgeId}
+                selectedNodes={selectedNodes}
+                selectedEdges={selectedEdges}
+                onCreateNode={(node: Node) => handleCreateNode(node)}
+                onDeleteNode={(nodesToDel: Node[]) => handleDeleteNode(nodesToDel)}
+                onRelateNode={(newEdges: Edge[]) => handleRelateNode(newEdges)}
+                onDeleteEdge={(edgesToDel: Edge[]) => handleDeleteEdge(edgesToDel)}
+              />
+            </div>
+          </AccordionDetails>
+        </Accordion>
+        <Accordion>
+          <AccordionSummary expandIcon={<ExpandMoreIcon/>}>
+            <Typography>Actions</Typography>
+          </AccordionSummary>
+          <AccordionDetails>
+            <div id="actionsMenu-container">
+              <Actions
+                selectedNodes={selectedNodes}
+              />
+            </div>
+          </AccordionDetails>
+        </Accordion>
+      </Stack>
     </div>
   );
 };
