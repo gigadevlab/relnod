@@ -39,6 +39,7 @@ class ActionAPIView(views.APIView):
         action_map = {
             "person": [
                 {"name": 'a', "description": "get first degree relations"},
+                {"name": 'c', "description": "get first degree relations"},
                 {"name": 'b', "description": "get third degree relations"},
             ],
             "hotel": [

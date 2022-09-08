@@ -14,20 +14,20 @@ code {
 
 #network-container {
   grid-area: lt;
-  height: 500px;
+  height: 600px;
   width: 1150px;
-  max-height: 500px;
+  max-height: 600px;
   max-width: 1150px;
 }
 
-#options-container {
-  grid-area: lb;
-  height: 100px;
-  width: 1150px;
-  max-height: 100px;
-  max-width: 1150px;
-  overflow: auto;
-}
+/*#options-container {*/
+/*  grid-area: lb;*/
+/*  height: 100px;*/
+/*  width: 1150px;*/
+/*  max-height: 100px;*/
+/*  max-width: 1150px;*/
+/*  overflow: auto;*/
+/*}*/
 
 #toolbox-container {
   grid-area: rt;
@@ -53,8 +53,7 @@ code {
   display: grid;
   grid-template-areas:
               'lt rt'
-              'lt rb'
-              'lb rb';
+              'lt rb';
   gap: 10px;
   padding: 10px;
 }
