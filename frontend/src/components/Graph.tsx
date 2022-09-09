@@ -18,72 +18,50 @@ const Graph = () => {
   const networkContainer = React.useRef<HTMLDivElement>(null);
   const optionsContainer = React.useRef<HTMLDivElement>(null);
 
-  const [popup, setPopup] = React.useState<{ node: Node, left: number, top: number }>();
-
-  const [nextNodeId, setNextNodeId] = React.useState<number>(1);
-  const [nodesOrdered, setNodesOrdered] = React.useState<any[]>([]);
-
-  const [nextEdgeId, setNextEdgeId] = React.useState<number>(1);
-  const [edgesOrdered, setEdgesOrdered] = React.useState<any[]>([]);
-
-  const [nodes, setNodes] = React.useState<any[]>([]);
-  const [edges, setEdges] = React.useState<any[]>([]);
   const [options, setOptions] = React.useState<vis.Options>();
+
+  const [nodeMap, setNodeMap] = React.useState<{[key: string]: Node}>({});
+  const [edgeMap, setEdgeMap] = React.useState<{[key: string]: Edge}>({});
 
   const [selectedNodes, setSelectedNodes] = React.useState<any[]>([]);
   const [selectedEdges, setSelectedEdges] = React.useState<any[]>([]);
 
   React.useEffect(() => {
     infoService((nodes: any) => {
-      let newNodes: Array<Node> = new Array<Node>();
+      let newNodeMap: {[key: string]: Node} = {};
 
       let localNodesStr = window.localStorage.getItem("nodes");
       let localNodes: Node[];
       if (localNodesStr) {
         localNodes = JSON.parse(localNodesStr);
-        console.log("local:", JSON.parse(localNodesStr));
+        // console.log("local:", JSON.parse(localNodesStr));
       }
 
       nodes.forEach((node: Node) => {
+        node.id = node.key;
         node.label = node.key;
         node.image = MEDIA_URL + node.type.icon;
         node.title = "Popup";
-        newNodes[node.id] = node;
 
-        if (node.id > nextNodeId) setNextNodeId(node.id + 1);
+        newNodeMap[node.key] = node;
       });
 
-      console.log(newNodes);
-
-      setNodesOrdered(newNodes);
+      // console.log(newNodeMap);
+      setNodeMap(newNodeMap);
     });
 
     relationService((edges: any) => {
-      let newEdges: Array<Edge> = new Array<Edge>();
+      let newEdgeMap: {[key: string]: Edge} = {};
 
       edges.forEach((edge: Edge, ix: number) => {
-        edge.id = ix;
-        newEdges[ix] = edge;
+        edge.id = `${edge.from}-${edge.to}`;
+        newEdgeMap[edge.id] = edge;
       });
 
-      console.log(newEdges);
-
-      setNextEdgeId(edges.length);
-      setEdgesOrdered(newEdges);
+      // console.log(newEdgeMap);
+      setEdgeMap(newEdgeMap);
     });
   }, []);
-
-  React.useEffect(() => {
-    let filtered: vis.Node[] = nodesOrdered.filter((el: Node) => el);
-    setNodes(filtered);
-
-    window.localStorage.setItem("nodes", JSON.stringify(nodesOrdered));
-  }, [nodesOrdered]);
-
-  React.useEffect(() => {
-    let filtered: vis.Edge[] = edgesOrdered.filter((el: Edge) => el);
-    setEdges(filtered);
-  }, [edgesOrdered]);
 
   React.useEffect(() => {
     setOptions({
@@ -100,10 +78,13 @@ const Graph = () => {
           size: 12,
           face: "Tahoma",
         },
+        borderWidth: 1,
+        borderWidthSelected: 5,
       },
       edges: {
         color: {inherit: true},
-        width: 0.15,
+        width: 1,
+        selectionWidth: 5,
         smooth: {
           enabled: true,
           type: "continuous",
@@ -116,6 +97,7 @@ const Graph = () => {
         multiselect: true,
         hover: true
       },
+      physics: true,
       // configure: {
       //   filter: function (option: any, path: any) {
       //     if (option === "inherit") {
@@ -144,7 +126,6 @@ const Graph = () => {
       //   container: optionsContainer.current,
       //   showButton: false,
       // },
-      physics: true,
       // manipulation: {
       //   enabled: true,
       //   initiallyActive: true,
@@ -175,68 +156,66 @@ const Graph = () => {
   }, []);
 
   React.useEffect(() => {
+    let nodes: vis.Node[] = Object.values(nodeMap);
+    let edges: vis.Edge[] = Object.values(edgeMap);
+
+    console.log(nodes, edges);
+
     const network =
       networkContainer.current &&
       new Network(networkContainer.current, {nodes, edges}, options);
 
     if (network) {
       network.on('click', (properties) => {
-        console.log(nodesOrdered, edgesOrdered);
-        console.log(properties.nodes, properties.edges);
+        console.log(nodeMap, edgeMap);
 
-        let selNodes = properties.nodes.map((id: number) => nodesOrdered[id]);
+        let selNodes = properties.nodes.map((id: string) => nodeMap[id]);
         setSelectedNodes(selNodes);
 
-        let selEdges = properties.edges.map((id: number) => edgesOrdered[id]);
+        let selEdges = properties.edges.map((id: number) => edgeMap[id]);
         setSelectedEdges(selEdges);
 
-        setPopup(undefined);
+        console.log(selNodes, selEdges);
       });
       network.on('hoverNode', (properties) => {
         const {x, y} = properties.pointer.DOM;
-        setPopup({node: nodesOrdered[properties.node], left: x, top: y});
       });
     }
-  }, [networkContainer, nodes, edges, options]);
+  }, [networkContainer, nodeMap, edgeMap, options]);
 
   const handleCreateNode = (node: Node) => {
-    console.log([...nodesOrdered, node]);
-
-    setNodesOrdered([...nodesOrdered, node]);
-    setNextNodeId(nextNodeId + 1);
+    setNodeMap({...nodeMap, [node.key]: node});
   }
 
   const handleDeleteNode = (nodesToDel: Node[]) => {
-    let newNodes = [...nodesOrdered];
+    let newNodeMap = {...nodeMap};
 
     nodesToDel.forEach((node) => {
-      newNodes.splice(node.id, 1, null);
+      delete newNodeMap[node.id];
     });
 
-    setNodesOrdered(newNodes);
+    setNodeMap(newNodeMap);
     setSelectedNodes([]);
   }
 
-  const handleRelateNode = (newEdges: Edge[]) => {
-    console.log([...edges, ...newEdges]);
-    setEdgesOrdered([...edgesOrdered, ...newEdges]);
-    setNextEdgeId(nextEdgeId + 1);
+  const handleRelateNode = (newEdges: {[key: string]: Edge}) => {
+    setEdgeMap({...edgeMap, ...newEdges})
   }
 
   const handleDeleteEdge = (egdesToDel: Edge[]) => {
-    let newEdges = [...edgesOrdered];
+    let newEdgeMap = {...edgeMap};
+
     egdesToDel.forEach((edge) => {
-      newEdges.splice(edge.id, 1, null);
+      delete newEdgeMap[edge.id];
     });
 
-    setEdgesOrdered(newEdges);
+    setEdgeMap(newEdgeMap);
     setSelectedEdges([]);
   }
 
   return (
     <div>
       <div ref={networkContainer} id="network-container"/>
-      {/*<div ref={optionsContainer} id="options-container"/>*/}
       <Stack
         style={{
           position: "absolute",
@@ -247,28 +226,27 @@ const Graph = () => {
           width: "450px"
         }}
         direction={"column"}
-        spacing={2}
+        // spacing={2}
+        sx={{backgroundColor: "lightyellow"}}
       >
-        <Accordion>
+        <Accordion style={{backgroundColor: "lightyellow"}}>
           <AccordionSummary expandIcon={<ExpandMoreIcon/>}>
             <Typography>Toolbox</Typography>
           </AccordionSummary>
           <AccordionDetails>
             <div id="toolbox-container">
               <Toolbox
-                nextNodeId={nextNodeId}
-                nextEdgeId={nextEdgeId}
                 selectedNodes={selectedNodes}
                 selectedEdges={selectedEdges}
                 onCreateNode={(node: Node) => handleCreateNode(node)}
                 onDeleteNode={(nodesToDel: Node[]) => handleDeleteNode(nodesToDel)}
-                onRelateNode={(newEdges: Edge[]) => handleRelateNode(newEdges)}
+                onRelateNode={(newEdges: {[key: string]: Edge}) => handleRelateNode(newEdges)}
                 onDeleteEdge={(edgesToDel: Edge[]) => handleDeleteEdge(edgesToDel)}
               />
             </div>
           </AccordionDetails>
         </Accordion>
-        <Accordion>
+        <Accordion style={{backgroundColor: "lightyellow"}}>
           <AccordionSummary expandIcon={<ExpandMoreIcon/>}>
             <Typography>Actions</Typography>
           </AccordionSummary>

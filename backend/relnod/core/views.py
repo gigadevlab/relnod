@@ -73,10 +73,9 @@ class RelationAPIView(views.APIView):
 
     def get(self, request, *args, **kwargs):
         return Response(data=[
-            {"from": 1, "to": 2},
-            {"from": 3, "to": 1},
-            {"from": 4, "to": 10},
-            {"from": 6, "to": 9},
+            {"from": '10088201022', "to": 'Ankara'},
+            {"from": 'Istanbul', "to": 'Ramada'},
+            {"from": '06BGG742', "to": '10088201190'},
         ])
 
     def relations(self):

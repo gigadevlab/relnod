@@ -8,13 +8,11 @@ import "../static/menu.css";
 
 
 interface ToolboxProps {
-  nextNodeId: number;
-  nextEdgeId: number;
   selectedNodes: Node[];
   selectedEdges: Edge[];
   onCreateNode?: (node: Node) => void;
   onDeleteNode?: (nodes: Node[]) => void;
-  onRelateNode?: (edges: Edge[]) => void;
+  onRelateNode?: (edges: { [key: string]: Edge }) => void;
   onDeleteEdge?: (edges: Edge[]) => void;
 }
 
@@ -33,14 +31,12 @@ const Toolbox = (props: ToolboxProps) => {
   const handleCreate = (type: NodeType) => {
     if (props.onCreateNode && key) {
       let node: Node = {
-        id: props.nextNodeId,
+        id: key,
         key: key,
         type: type,
         label: key,
         image: MEDIA_URL + type.icon
       };
-
-      console.log(node);
 
       props.onCreateNode(node);
     }
@@ -54,16 +50,16 @@ const Toolbox = (props: ToolboxProps) => {
 
   const handleRelate = (nodes: Node[]) => {
     if (props.onRelateNode) {
-      let newEdges: Edge[] = [];
+      let newEdgeMap: { [key: string]: Edge } = {};
 
       nodes.forEach((node, ix) => {
-        if (ix !== props.selectedNodes.length - 1)
-          newEdges.push({id: props.nextEdgeId, from: node.id, to: nodes[ix + 1].id})
+        if (ix !== props.selectedNodes.length - 1) {
+          let id = `${node.id}-${nodes[ix + 1].id}`;
+          newEdgeMap[id] = {id: id, from: node.id, to: nodes[ix + 1].id};
+        }
       })
 
-      console.log(newEdges);
-
-      props.onRelateNode(newEdges);
+      props.onRelateNode(newEdgeMap);
     }
   }
 
@@ -75,16 +71,15 @@ const Toolbox = (props: ToolboxProps) => {
 
   return (
     <div>
-      {/*<h3>CRUD</h3>*/}
       <Grid container spacing={1}>
         {
           types.map((type) => (
-            <Grid item xs={6}>
+            <Grid item xs={6} key={type.name}>
               <Button
                 onClick={() => handleCreate(type)}
                 variant={"outlined"}
               >
-                <Avatar src={MEDIA_URL + type.icon} sx={{ width: 24, height: 24 }}/>
+                <Avatar src={MEDIA_URL + type.icon} sx={{width: 24, height: 24}}/>
                 <div style={{display: "inline-block", float: "right"}}>{type.name}</div>
               </Button>
             </Grid>

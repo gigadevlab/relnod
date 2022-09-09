@@ -29,6 +29,7 @@ const Actions = (props: { selectedNodes: Node[] }) => {
         {
           actions.map((action) => (
             <button
+              key={action.name}
               style={{display: "block", width: "100%", margin: "5px 0 0 0"}}
               onClick={() => {
                 actionService({
@@ -62,7 +63,7 @@ const Actions = (props: { selectedNodes: Node[] }) => {
         {
           props.selectedNodes.map((node) =>
             <>
-              <tr>
+              <tr key={node.key}>
                 <td>{node.type.name}</td>
                 <td>{node.key}</td>
               </tr>
