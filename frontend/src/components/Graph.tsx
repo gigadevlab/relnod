@@ -15,10 +15,12 @@ import Popup from './Popup';
 
 
 const Graph = () => {
+  const [network, setNetwork] = React.useState<Network>();
+
   const networkContainer = React.useRef<HTMLDivElement>(null);
   const optionsContainer = React.useRef<HTMLDivElement>(null);
 
-  const [options, setOptions] = React.useState<vis.Options>();
+  const [options, setOptions] = React.useState<vis.Options>({});
 
   const [nodeMap, setNodeMap] = React.useState<{[key: string]: Node}>({});
   const [edgeMap, setEdgeMap] = React.useState<{[key: string]: Edge}>({});
@@ -26,42 +28,52 @@ const Graph = () => {
   const [selectedNodes, setSelectedNodes] = React.useState<any[]>([]);
   const [selectedEdges, setSelectedEdges] = React.useState<any[]>([]);
 
-  React.useEffect(() => {
-    infoService((nodes: any) => {
-      let newNodeMap: {[key: string]: Node} = {};
+  const nodeArr2nodeMap = (nodes: Node[]) => {
+    let newNodeMap: {[key: string]: Node} = {};
 
-      let localNodesStr = window.localStorage.getItem("nodes");
-      let localNodes: Node[];
-      if (localNodesStr) {
-        localNodes = JSON.parse(localNodesStr);
-        // console.log("local:", JSON.parse(localNodesStr));
-      }
+    nodes.forEach((node: Node) => {
+      node.id = node.key;
+      node.label = node.key;
+      node.image = MEDIA_URL + node.type.icon;
+      node.title = "Popup";
 
-      nodes.forEach((node: Node) => {
-        node.id = node.key;
-        node.label = node.key;
-        node.image = MEDIA_URL + node.type.icon;
-        node.title = "Popup";
-
-        newNodeMap[node.key] = node;
-      });
-
-      // console.log(newNodeMap);
-      setNodeMap(newNodeMap);
+      newNodeMap[node.key] = node;
     });
 
-    relationService((edges: any) => {
-      let newEdgeMap: {[key: string]: Edge} = {};
+    return newNodeMap
+  }
 
-      edges.forEach((edge: Edge, ix: number) => {
-        edge.id = `${edge.from}-${edge.to}`;
-        newEdgeMap[edge.id] = edge;
-      });
+  const pushNodes = (nodes: Node[]) => {
+    setNodeMap({...nodeMap, ...nodeArr2nodeMap(nodes)});
+  }
 
-      // console.log(newEdgeMap);
-      setEdgeMap(newEdgeMap);
+  const pushEdges = (edges: Edge[]) => {
+    let newEdgeMap: {[key: string]: Edge} = {};
+
+    edges.forEach((edge: Edge, ix: number) => {
+      edge.id = `${edge.from}-${edge.to}`;
+      newEdgeMap[edge.id] = edge;
     });
-  }, []);
+
+    setEdgeMap({...edgeMap, ...newEdgeMap});
+  }
+
+  // React.useEffect(() => {
+  //   infoService((nodes: any) => {
+  //     let localNodesStr = window.localStorage.getItem("nodes");
+  //     let localNodes: Node[];
+  //     if (localNodesStr) {
+  //       localNodes = JSON.parse(localNodesStr);
+  //       // console.log("local:", JSON.parse(localNodesStr));
+  //     }
+  //
+  //     pushNodes(nodes);
+  //   });
+  //
+  //   relationService((edges: any) => {
+  //     pushEdges(edges);
+  //   });
+  // }, []);
 
   React.useEffect(() => {
     setOptions({
@@ -97,7 +109,7 @@ const Graph = () => {
         multiselect: true,
         hover: true
       },
-      physics: true,
+      physics: false,
       // configure: {
       //   filter: function (option: any, path: any) {
       //     if (option === "inherit") {
@@ -156,16 +168,17 @@ const Graph = () => {
   }, []);
 
   React.useEffect(() => {
-    let nodes: vis.Node[] = Object.values(nodeMap);
-    let edges: vis.Edge[] = Object.values(edgeMap);
+    if (networkContainer.current) setNetwork(new Network(networkContainer.current, {}, {}))
+  }, [networkContainer])
 
-    console.log(nodes, edges);
-
-    const network =
-      networkContainer.current &&
-      new Network(networkContainer.current, {nodes, edges}, options);
-
+  React.useEffect(() => {
     if (network) {
+      let nodes: vis.Node[] = Object.values(nodeMap);
+      let edges: vis.Edge[] = Object.values(edgeMap);
+
+      network.setData({nodes, edges});
+      network.setOptions(options);
+
       network.on('click', (properties) => {
         console.log(nodeMap, edgeMap);
 
@@ -181,7 +194,7 @@ const Graph = () => {
         const {x, y} = properties.pointer.DOM;
       });
     }
-  }, [networkContainer, nodeMap, edgeMap, options]);
+  }, [network, nodeMap, edgeMap, options]);
 
   const handleCreateNode = (node: Node) => {
     setNodeMap({...nodeMap, [node.key]: node});
@@ -196,6 +209,10 @@ const Graph = () => {
 
     setNodeMap(newNodeMap);
     setSelectedNodes([]);
+  }
+
+  const handleDeleteOtherNodes = (nodesToNotDel: Node[]) => {
+    setNodeMap(nodeArr2nodeMap(nodesToNotDel));
   }
 
   const handleRelateNode = (newEdges: {[key: string]: Edge}) => {
@@ -242,6 +259,7 @@ const Graph = () => {
                 onDeleteNode={(nodesToDel: Node[]) => handleDeleteNode(nodesToDel)}
                 onRelateNode={(newEdges: {[key: string]: Edge}) => handleRelateNode(newEdges)}
                 onDeleteEdge={(edgesToDel: Edge[]) => handleDeleteEdge(edgesToDel)}
+                onDeleteOthers={(nodesToNotDel: Node[]) => handleDeleteOtherNodes(nodesToNotDel)}
               />
             </div>
           </AccordionDetails>
@@ -252,9 +270,17 @@ const Graph = () => {
           </AccordionSummary>
           <AccordionDetails>
             <div id="actionsMenu-container">
-              <Actions
-                selectedNodes={selectedNodes}
-              />
+              {network &&
+                <Actions
+                  network={network}
+                  selectedNodes={selectedNodes}
+                  actionCallback={({nodes, edges}: {nodes: Node[], edges: Edge[]}) => {
+                    console.log(nodes, edges);
+                    pushNodes(nodes);
+                    pushEdges(edges);
+                  }}
+                />
+              }
             </div>
           </AccordionDetails>
         </Accordion>

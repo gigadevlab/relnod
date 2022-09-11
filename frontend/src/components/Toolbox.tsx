@@ -12,6 +12,7 @@ interface ToolboxProps {
   selectedEdges: Edge[];
   onCreateNode?: (node: Node) => void;
   onDeleteNode?: (nodes: Node[]) => void;
+  onDeleteOthers?: (nodes: Node[]) => void;
   onRelateNode?: (edges: { [key: string]: Edge }) => void;
   onDeleteEdge?: (edges: Edge[]) => void;
 }
@@ -45,6 +46,12 @@ const Toolbox = (props: ToolboxProps) => {
   const handleDelete = (nodes: Node[]) => {
     if (props.onDeleteNode) {
       props.onDeleteNode(nodes);
+    }
+  };
+
+  const handleDeleteOthers = (nodes: Node[]) => {
+    if (props.onDeleteOthers) {
+      props.onDeleteOthers(nodes);
     }
   };
 
@@ -97,13 +104,16 @@ const Toolbox = (props: ToolboxProps) => {
               }}
             />
             {props.selectedNodes.length > 0 &&
-            <Button onClick={() => handleDelete(props.selectedNodes)}>Delete Node</Button>
+            <Button onClick={() => handleDelete(props.selectedNodes)}>Delete Selected Node(s)</Button>
+            }
+            {props.selectedNodes.length > 0 &&
+            <Button onClick={() => handleDeleteOthers(props.selectedNodes)}>Delete Non-Selected Node(s)</Button>
             }
             {props.selectedNodes.length > 1 &&
-            <Button onClick={() => handleRelate(props.selectedNodes)}>Relate Node</Button>
+            <Button onClick={() => handleRelate(props.selectedNodes)}>Relate Node(s)</Button>
             }
             {props.selectedEdges.length > 0 &&
-            <Button onClick={() => handleDerelate(props.selectedEdges)}>Delete Relation</Button>
+            <Button onClick={() => handleDerelate(props.selectedEdges)}>Delete Relation(s)</Button>
             }
           </Stack>
         </Grid>

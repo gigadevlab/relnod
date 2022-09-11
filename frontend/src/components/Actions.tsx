@@ -1,11 +1,22 @@
 import React from 'react';
+import { Network } from 'vis-network';
+import { IconButton, Stack } from '@mui/material';
 
 import { actionService, typeActionService } from "../api/services";
-import { Action, Node } from '../constants/types';
+import { Action, Node, Edge } from '../constants/types';
 import DateRangePicker from './DateRangePicker';
 
+import WorkspacesIcon from '@mui/icons-material/Workspaces';
+import ZoomInIcon from '@mui/icons-material/ZoomIn';
 
-const Actions = (props: { selectedNodes: Node[] }) => {
+
+interface ActionsProps {
+  network: Network;
+  selectedNodes: Node[];
+  actionCallback?: ({nodes, edges}: {nodes: Node[], edges: Edge[]}) => void;
+}
+
+const Actions = (props: ActionsProps) => {
   const [actions, setActions] = React.useState<Action[]>([]);
   const [dateRange, setDateRange] = React.useState<{ start?: Date, end?: Date }>({start: undefined, end: undefined});
 
@@ -13,7 +24,11 @@ const Actions = (props: { selectedNodes: Node[] }) => {
     if (props.selectedNodes.length === 1) {
       typeActionService({
         callback: (actions: Action[]) => {
-          setActions(actions)
+          let nodes = props.selectedNodes.map((node) => {
+            return {key: node.key, type: node.type.id}
+          });
+          actions.forEach((action) => action.nodes = nodes);
+          setActions(actions);
         },
         pk: props.selectedNodes[0].type.name.toLowerCase()
       });
@@ -33,10 +48,11 @@ const Actions = (props: { selectedNodes: Node[] }) => {
               style={{display: "block", width: "100%", margin: "5px 0 0 0"}}
               onClick={() => {
                 actionService({
-                  callback: () => {
-                    console.log("ACTION COMPLETED")
+                  callback: ({nodes, edges}: {nodes: Node[], edges: Edge[]}) => {
+                    props.actionCallback?.({nodes, edges});
                   },
-                  pk: action.name,
+                  name: action.name,
+                  nodes: action.nodes,
                   filter: {date__between: [dateRange.start, dateRange.end]}
                 })
               }}
@@ -57,6 +73,7 @@ const Actions = (props: { selectedNodes: Node[] }) => {
         <tr>
           <th>Type</th>
           <th>Key</th>
+          <th>Actions</th>
         </tr>
         </thead>
         <tbody>
@@ -66,6 +83,18 @@ const Actions = (props: { selectedNodes: Node[] }) => {
               <tr key={node.key}>
                 <td>{node.type.name}</td>
                 <td>{node.key}</td>
+                <td>
+                  <Stack direction={"row"}>
+                    <IconButton
+                      size={"small"}
+                      onClick={() => props.network.clusterByConnection(node.key)}
+                    ><WorkspacesIcon fontSize={"inherit"}/></IconButton>
+                    <IconButton
+                      size={"small"}
+                      onClick={() => props.network.focus(node.key)}
+                    ><ZoomInIcon  fontSize={"inherit"}/></IconButton>
+                  </Stack>
+                </td>
               </tr>
             </>
           )

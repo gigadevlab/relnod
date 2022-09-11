@@ -16,9 +16,10 @@ class Node(models.Model):
 
 
 class Relation(models.Model):
-    key1 = models.CharField(max_length=255, unique=True)
-    key2 = models.CharField(max_length=255, unique=True)
-    type1 = models.ForeignKey(NodeType, on_delete=models.CASCADE)
-    type2 = models.ForeignKey(NodeType, on_delete=models.CASCADE)
+    key1 = models.CharField(max_length=255)
+    key2 = models.CharField(max_length=255)
+    type1 = models.ForeignKey(NodeType, on_delete=models.CASCADE, related_name='relation_type1')
+    type2 = models.ForeignKey(NodeType, on_delete=models.CASCADE, related_name='relation_type2')
+    relation_name = models.CharField(max_length=255)
 
 

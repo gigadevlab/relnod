@@ -35,16 +35,12 @@ export function typeActionService({callback, pk}: any) {
     });
 };
 
-export function actionService({callback, pk, filter}: any) {
-  var url = `http://127.0.0.1:8000/action/`;
+export function actionService({callback, name, nodes, filter}: any) {
+  var url = `http://127.0.0.1:8000/action/${name}/?nodes=${JSON.stringify(nodes)}&filters=${JSON.stringify(filter)}`;
 
-  if (pk) {
-    url += `${pk}/`;
-  }
-
-  if (filter) {
-    url += `?${Object.keys(filter).map((key) => `&${key}=${filter[key]}`)}`
-  }
+  // if (filter) {
+  //   url += `${Object.keys(filter).map((key) => `&${key}=${filter[key]}`)}`
+  // }
 
   axios.get(url)
     .then(function (response) {
