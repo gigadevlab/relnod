@@ -19,6 +19,12 @@ Dummy data in: backend/relnod/core/management/command
 There are engines and config files inside "backend/relnod/core/".
 You can define database further engines and views to make connection. 
 
+### config.py
+
+* ACTION_MAP: Defines the methods that will be show on frontend
+* VIEW_MAP: Defines DB connection engines, DSNs, and table names that are mapped to
+            "methods" in ACTION_MAP
+
 
 ## Usage
 
