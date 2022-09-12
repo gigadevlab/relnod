@@ -9,7 +9,6 @@ import DateRangePicker from './DateRangePicker';
 import WorkspacesIcon from '@mui/icons-material/Workspaces';
 import MyLocationIcon from '@mui/icons-material/MyLocation';
 import LockOpenOutlinedIcon from '@mui/icons-material/LockOpenOutlined';
-import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 
 
 interface ActionsProps {
