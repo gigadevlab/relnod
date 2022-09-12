@@ -61,9 +61,9 @@ def generate_row(type1: int = None, type2: int = None):
     type2, key2 = TYPES[type2 - 1] if type2 else random.choice(TYPES)
 
     return {
-        'key1': random.choice(key1),
+        'key1': str(random.choice(key1)),
         'type1': type1,
-        'key2': random.choice(key2),
+        'key2': str(random.choice(key2)),
         'type2': type2,
         'relation_name': date_generator()
     }

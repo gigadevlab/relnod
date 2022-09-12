@@ -19,7 +19,7 @@ interface ToolboxProps {
 
 const Toolbox = (props: ToolboxProps) => {
   const [types, setTypes] = React.useState<NodeType[]>([]);
-  const [key, setKey] = React.useState<string>();
+  const [key, setKey] = React.useState<string>("");
 
   React.useEffect(() => {
     typeInfoService({
@@ -81,7 +81,7 @@ const Toolbox = (props: ToolboxProps) => {
       <Grid container spacing={1}>
         {
           types.map((type) => (
-            <Grid item xs={6} key={type.name}>
+            <Grid item xs={3} key={type.name}>
               <Button
                 onClick={() => handleCreate(type)}
                 variant={"outlined"}

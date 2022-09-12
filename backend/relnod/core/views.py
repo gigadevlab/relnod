@@ -46,22 +46,27 @@ class ActionAPIView(views.APIView):
                 {"name": 'getPersonRelations', "description": "Get person relations"},
                 {"name": 'getHotelVisits', "description": "Get hotel visits"},
                 {"name": 'getPlaneTravels', "description": "Get plane travels"},
+                {"name": 'getBusTravels', "description": "Get bus travels"},
                 {"name": 'getJobs', "description": "Get jobs"},
+                {"name": 'getCityAccommodations', "description": "Get accommodated cities"},
+            ],
+            "car": [
+                {"name": 'getOwners', "description": "Get owners till now"}
             ],
             "hotel": [
                 {"name": 'getVisitors', "description": "Get visitors of the hotel"},
             ],
-            "car": [
-                {"name": 'getOwners', "description": "Get owners till now"}
+            "plane": [
+                {"name": 'getPlaneTravellers', "description": "Get plane travellers"}
+            ],
+            "bus": [
+                {"name": 'getBusTravellers', "description": "Get bus travellers"}
             ],
             "phone": [
                 {"name": 'getCallers', "description": "Get callers"}
             ],
             "city": [
                 {"name": 'getCitizens', "description": "Get citizens"}
-            ],
-            "plane": [
-                {"name": 'getPlaneTravellers', "description": "Get plane travellers"}
             ],
             "job": [
                 {"name": 'getWorkers', "description": "Get workers"}
@@ -77,22 +82,103 @@ class ActionAPIView(views.APIView):
     def action(name, nodes, filters):
 
         view_map = {
-            "getPersonRelations": lambda _: sqlite_connector(sid='rel.sqlite3', table_name='1-1', keys=keys),
-            "getCars": lambda _: sqlite_connector(sid='rel.sqlite3', table_name='1-2', keys=keys),
-            "getOwners": lambda _: sqlite_connector(sid='rel.sqlite3', table_name='1-2', keys=keys),
-            "getHotelVisits": lambda _: sqlite_connector(sid='rel.sqlite3', table_name='1-3', keys=keys),
-            "getVisitors": lambda _: sqlite_connector(sid='rel.sqlite3', table_name='1-3', keys=keys),
-            "getPlaneTravels": lambda _: sqlite_connector(sid='rel.sqlite3', table_name='1-4', keys=keys),
-            "getPlaneTravellers": lambda _: sqlite_connector(sid='rel.sqlite3', table_name='1-4', keys=keys),
-            "getPhones": lambda _: sqlite_connector(sid='rel.sqlite3', table_name='1-6', keys=keys),
-            "getCallers": lambda _: sqlite_connector(sid='rel.sqlite3', table_name='1-6', keys=keys),
-            "getWorkers": lambda _: sqlite_connector(sid='rel.sqlite3', table_name='1-8', keys=keys),
-            "getJobs": lambda _: sqlite_connector(sid='rel.sqlite3', table_name='1-8', keys=keys),
+            "getPersonRelations": {
+                "engine": sqlite_connector,
+                "dsn": 'rel.sqlite3',
+                "table_name": '1-1'
+            },
+            "getCars": {
+                "engine": postgres_connector,
+                "dsn": {
+                    "dbname": 'relnod',
+                    "user": 'postgres',
+                    "password": 'postgres',
+                    "host": 'relnod_db_postgres',  # docker-compose container name
+                    "port": '5432'
+                },
+                "table_name": '1-2'
+            },
+            "getOwners": {
+                "engine": postgres_connector,
+                "dsn": {
+                    "dbname": 'relnod',
+                    "user": 'postgres',
+                    "password": 'postgres',
+                    "host": 'relnod_db_postgres',  # docker-compose container name
+                    "port": '5432'
+                },
+                "table_name": '1-2'
+            },
+            "getHotelVisits": {
+                "engine": sqlite_connector,
+                "dsn": 'rel.sqlite3',
+                "table_name": '1-3'
+            },
+            "getVisitors": {
+                "engine": sqlite_connector,
+                "dsn": 'rel.sqlite3',
+                "table_name": '1-3'
+            },
+            "getPlaneTravels": {
+                "engine": sqlite_connector,
+                "dsn": 'rel.sqlite3',
+                "table_name": '1-4'
+            },
+            "getPlaneTravellers": {
+                "engine": sqlite_connector,
+                "dsn": 'rel.sqlite3',
+                "table_name": '1-4'
+            },
+            "getBusTravels": {
+                "engine": sqlite_connector,
+                "dsn": 'rel.sqlite3',
+                "table_name": '1-5'
+            },
+            "getBusTravellers": {
+                "engine": sqlite_connector,
+                "dsn": 'rel.sqlite3',
+                "table_name": '1-5'
+            },
+            "getPhones": {
+                "engine": sqlite_connector,
+                "dsn": 'rel.sqlite3',
+                "table_name": '1-6'
+            },
+            "getCallers": {
+                "engine": sqlite_connector,
+                "dsn": 'rel.sqlite3',
+                "table_name": '1-6'
+            },
+            "getCityAccommodations": {
+                "engine": sqlite_connector,
+                "dsn": 'rel.sqlite3',
+                "table_name": '1-7'
+            },
+            "getCitizens": {
+                "engine": sqlite_connector,
+                "dsn": 'rel.sqlite3',
+                "table_name": '1-7'
+            },
+            "getWorkers": {
+                "engine": sqlite_connector,
+                "dsn": 'rel.sqlite3',
+                "table_name": '1-8'
+            },
+            "getJobs": {
+                "engine": sqlite_connector,
+                "dsn": 'rel.sqlite3',
+                "table_name": '1-8'
+            },
         }
 
-        keys = ','.join([f"\'{node['key']}\'" for node in nodes])
+        keys = [node['key'] for node in nodes]
 
-        data = rows2data((view_map[name])(keys))
+        view = (view_map[name])
+        engine = view["engine"]
+        dsn = view["dsn"]
+        table_name = view["table_name"]
+
+        data = rows2data(engine(dsn=dsn, table_name=table_name, keys=keys))
 
         # print(f"ACTION TYPE: {name}, NODES: {nodes}, FILTERS: {filters}, DATA: {data}")
         return Response(data=data)
@@ -136,19 +222,34 @@ def rows2data(rows):
     return {"nodes": nodes, "edges": edges}
 
 
-def sqlite_connector(sid, table_name, keys):
+def sqlite_connector(dsn, table_name, keys):
     import sqlite3
-    con = sqlite3.connect(sid)
+
+    con = sqlite3.connect(dsn)
     con.row_factory = dict_factory
+    keys = ','.join([f"\'{key}\'" for key in keys])
+
     cur = con.cursor()
-    print(query(keys, table_name))
-    rows = cur.execute(query(keys, table_name)).fetchall()
+    cur.execute(f"""
+        SELECT key1, type1, relation_name, key2, type2 FROM \'{table_name}\'
+        WHERE key1 in ({keys}) OR key2 in ({keys});
+    """)
+    rows = cur.fetchall()
     cur.close()
     return rows
 
 
-def query(keys, table_name):
-    return f"""
-        SELECT key1, type1, relation_name, key2, type2 FROM \'{table_name}\'
+def postgres_connector(dsn, table_name, keys):
+    import psycopg
+
+    con = psycopg.connect(**dsn, row_factory=psycopg.rows.dict_row)
+    keys = ','.join([f"\'{key}\'" for key in keys])
+
+    cur = con.cursor()
+    cur.execute(f"""
+        SELECT key1, type1, relation_name, key2, type2 FROM \"{table_name}\"
         WHERE key1 in ({keys}) OR key2 in ({keys});
-    """
+    """)
+    rows = cur.fetchall()
+    cur.close()
+    return rows

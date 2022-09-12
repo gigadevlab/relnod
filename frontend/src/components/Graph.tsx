@@ -1,41 +1,41 @@
 import React from 'react';
-import { Accordion, AccordionDetails, AccordionSummary, Stack, Typography } from '@mui/material';
+import { Accordion, AccordionDetails, AccordionSummary, Button, Stack, Typography } from '@mui/material';
 import vis, { Network } from 'vis-network';
 
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
-import { infoService, MEDIA_URL, relationService } from "../api/services";
+import { MEDIA_URL } from "../api/services";
 import { Edge, Node } from '../constants/types';
 
 import Actions from './Actions';
 import Toolbox from './Toolbox';
 
 import "../index.css";
-import Popup from './Popup';
+
+import CloudDownloadOutlinedIcon from '@mui/icons-material/CloudDownloadOutlined';
+import CloudUploadOutlinedIcon from '@mui/icons-material/CloudUploadOutlined';
 
 
 const Graph = () => {
   const [network, setNetwork] = React.useState<Network>();
-
   const networkContainer = React.useRef<HTMLDivElement>(null);
-  const optionsContainer = React.useRef<HTMLDivElement>(null);
 
   const [options, setOptions] = React.useState<vis.Options>({});
 
-  const [nodeMap, setNodeMap] = React.useState<{[key: string]: Node}>({});
-  const [edgeMap, setEdgeMap] = React.useState<{[key: string]: Edge}>({});
+  const [nodeMap, setNodeMap] = React.useState<{ [key: string]: Node }>({});
+  const [edgeMap, setEdgeMap] = React.useState<{ [key: string]: Edge }>({});
 
   const [selectedNodes, setSelectedNodes] = React.useState<any[]>([]);
   const [selectedEdges, setSelectedEdges] = React.useState<any[]>([]);
 
   const nodeArr2nodeMap = (nodes: Node[]) => {
-    let newNodeMap: {[key: string]: Node} = {};
+    let newNodeMap: { [key: string]: Node } = {};
 
     nodes.forEach((node: Node) => {
       node.id = node.key;
-      node.label = node.key;
+      node.label = node.key.toString();
       node.image = MEDIA_URL + node.type.icon;
-      node.title = "Popup";
+      node.title = `${node.type.name} | ${node.key}`;
 
       newNodeMap[node.key] = node;
     });
@@ -48,7 +48,7 @@ const Graph = () => {
   }
 
   const pushEdges = (edges: Edge[]) => {
-    let newEdgeMap: {[key: string]: Edge} = {};
+    let newEdgeMap: { [key: string]: Edge } = {};
 
     edges.forEach((edge: Edge, ix: number) => {
       edge.id = `${edge.from}-${edge.to}`;
@@ -58,22 +58,22 @@ const Graph = () => {
     setEdgeMap({...edgeMap, ...newEdgeMap});
   }
 
-  // React.useEffect(() => {
-  //   infoService((nodes: any) => {
-  //     let localNodesStr = window.localStorage.getItem("nodes");
-  //     let localNodes: Node[];
-  //     if (localNodesStr) {
-  //       localNodes = JSON.parse(localNodesStr);
-  //       // console.log("local:", JSON.parse(localNodesStr));
-  //     }
-  //
-  //     pushNodes(nodes);
-  //   });
-  //
-  //   relationService((edges: any) => {
-  //     pushEdges(edges);
-  //   });
-  // }, []);
+
+  const getFromLocal = () => {
+    let localNodeMapStr = window.localStorage.getItem("nodeMap");
+    let localEdgeMapStr = window.localStorage.getItem("edgeMap");
+
+    if (localNodeMapStr) {
+      console.log(JSON.parse(localNodeMapStr));
+      setNodeMap({...nodeMap, ...JSON.parse(localNodeMapStr)});
+    }
+    if (localEdgeMapStr) setEdgeMap({...edgeMap, ...JSON.parse(localEdgeMapStr)});
+  };
+
+  const saveToLocal = () => {
+    window.localStorage.setItem("nodeMap", JSON.stringify(nodeMap));
+    window.localStorage.setItem("edgeMap", JSON.stringify(edgeMap));
+  };
 
   React.useEffect(() => {
     setOptions({
@@ -82,6 +82,7 @@ const Graph = () => {
       width: '100%',
       nodes: {
         shape: "circularImage",
+        physics: true,
         scaling: {
           min: 10,
           max: 30,
@@ -109,61 +110,72 @@ const Graph = () => {
         multiselect: true,
         hover: true
       },
-      physics: false,
-      // configure: {
-      //   filter: function (option: any, path: any) {
-      //     if (option === "inherit") {
-      //       return true;
-      //     }
-      //     if (option === "type" && path.indexOf("smooth") !== -1) {
-      //       return true;
-      //     }
-      //     if (option === "roundness") {
-      //       return true;
-      //     }
-      //     if (option === "width") {
-      //       return true;
-      //     }
-      //     if (option === "shape") {
-      //       return true;
-      //     }
-      //     if (option === "hideEdgesOnDrag") {
-      //       return true;
-      //     }
-      //     if (option === "hideNodesOnDrag") {
-      //       return true;
-      //     }
-      //     return false;
-      //   },
-      //   container: optionsContainer.current,
-      //   showButton: false,
-      // },
-      // manipulation: {
-      //   enabled: true,
-      //   initiallyActive: true,
-      //   addNode: (node: any, callback: any) => {
-      //     console.log("Add Node");
-      //     node = {
-      //       label: 'New',
-      //       image: MEDIA_URL + "person-icon.png",
-      //       type: {
-      //         key: 1,
-      //         name: "Person"
-      //       }
-      //     }
-      //     setNodes([...nodes, node]);
-      //     console.log("Added Node", nodes);
-      //     callback(node);
-      //   },
-      //   // addEdge: true,
-      //   editNode: (node: any, callback: any) => {
-      //     console.log("edit:", node);
-      //     // callback(handleNodeEdit(node));
-      //   },
-      //   editEdge: true,
-      //   deleteNode: true,
-      //   deleteEdge: true,
-      // }
+      physics: {
+        enabled: true,
+        barnesHut: {
+          theta: 0.5,
+          gravitationalConstant: -2000,
+          centralGravity: 0.3,
+          springLength: 95,
+          springConstant: 0.04,
+          damping: 0.09,
+          avoidOverlap: 0
+        },
+        forceAtlas2Based: {
+          theta: 0.5,
+          gravitationalConstant: -50,
+          centralGravity: 0.01,
+          springConstant: 0.08,
+          springLength: 100,
+          damping: 0.4,
+          avoidOverlap: 0
+        },
+        repulsion: {
+          centralGravity: 0.2,
+          springLength: 200,
+          springConstant: 0.05,
+          nodeDistance: 100,
+          damping: 0.09
+        },
+        hierarchicalRepulsion: {
+          centralGravity: 0.0,
+          springLength: 100,
+          springConstant: 0.01,
+          nodeDistance: 120,
+          damping: 0.09,
+          avoidOverlap: 0
+        },
+        maxVelocity: 50,
+        minVelocity: 0.1,
+        solver: 'barnesHut',
+        stabilization: {
+          enabled: true,
+          iterations: 1000,
+          updateInterval: 100,
+          onlyDynamicEdges: false,
+          fit: true
+        },
+        timestep: 0.5,
+        adaptiveTimestep: true,
+        wind: {x: 0, y: 0}
+      },
+      layout: {
+        randomSeed: undefined,
+        improvedLayout: false,
+        clusterThreshold: 150,
+        hierarchical: {
+          enabled: false,
+          levelSeparation: 150,
+          nodeSpacing: 200,
+          treeSpacing: 200,
+          blockShifting: true,
+          edgeMinimization: true,
+          parentCentralization: true,
+          direction: 'UD',        // UD, DU, LR, RL
+          sortMethod: 'hubsize',  // hubsize, directed
+          shakeTowards: 'leaves'  // roots, leaves
+        }
+      }
     });
   }, []);
 
@@ -173,25 +185,27 @@ const Graph = () => {
 
   React.useEffect(() => {
     if (network) {
-      let nodes: vis.Node[] = Object.values(nodeMap);
-      let edges: vis.Edge[] = Object.values(edgeMap);
+      let nodes: Node[] = Object.values(nodeMap);
+      let edges: Edge[] = Object.values(edgeMap);
 
       network.setData({nodes, edges});
       network.setOptions(options);
 
       network.on('click', (properties) => {
-        console.log(nodeMap, edgeMap);
-
         let selNodes = properties.nodes.map((id: string) => nodeMap[id]);
         setSelectedNodes(selNodes);
 
         let selEdges = properties.edges.map((id: number) => edgeMap[id]);
         setSelectedEdges(selEdges);
-
-        console.log(selNodes, selEdges);
       });
-      network.on('hoverNode', (properties) => {
-        const {x, y} = properties.pointer.DOM;
+      network.on('dragEnd', (properties) => {
+        let dragNodeMap: { [key: string]: Node } = {};
+
+        properties.nodes.forEach((id: string) => {
+          dragNodeMap[id] = {...nodeMap[id], ...network.getPosition(id), physics: false}
+        })
+
+        if (Object.entries(dragNodeMap).length !== 0) setNodeMap({...nodeMap, ...dragNodeMap});
       });
     }
   }, [network, nodeMap, edgeMap, options]);
@@ -215,7 +229,7 @@ const Graph = () => {
     setNodeMap(nodeArr2nodeMap(nodesToNotDel));
   }
 
-  const handleRelateNode = (newEdges: {[key: string]: Edge}) => {
+  const handleRelateNode = (newEdges: { [key: string]: Edge }) => {
     setEdgeMap({...edgeMap, ...newEdges})
   }
 
@@ -234,52 +248,66 @@ const Graph = () => {
     <div>
       <div ref={networkContainer} id="network-container"/>
       <Stack
-        style={{
-          position: "absolute",
-          border: "1px solid lightgray",
-          float: "right",
-          top: "3%",
-          left: "74%",
-          width: "450px"
-        }}
         direction={"column"}
         // spacing={2}
-        sx={{backgroundColor: "lightyellow"}}
+        sx={{
+          backgroundColor: "lightyellow",
+          position: "absolute",
+          border: "1px solid lightgray",
+          float: "left",
+          top: "3%",
+          left: "calc(100% - 500px - 1rem)",
+          width: "500px",
+          transformOrigin: "top right",
+        }}
       >
-        <Accordion style={{backgroundColor: "lightyellow"}}>
+        <Stack direction={"row"} sx={{padding: "0.5rem"}} spacing={1}>
+          <Button
+            variant={"outlined"}
+            startIcon={<CloudDownloadOutlinedIcon/>}
+            onClick={saveToLocal}
+          >Save</Button>
+          <Button
+            variant={"outlined"}
+            startIcon={<CloudUploadOutlinedIcon/>}
+            onClick={getFromLocal}
+          >Get</Button>
+        </Stack>
+        <Accordion sx={{backgroundColor: "lightyellow"}} disableGutters>
           <AccordionSummary expandIcon={<ExpandMoreIcon/>}>
             <Typography>Toolbox</Typography>
           </AccordionSummary>
-          <AccordionDetails>
+          <AccordionDetails sx={{padding: 0}}>
             <div id="toolbox-container">
               <Toolbox
                 selectedNodes={selectedNodes}
                 selectedEdges={selectedEdges}
                 onCreateNode={(node: Node) => handleCreateNode(node)}
                 onDeleteNode={(nodesToDel: Node[]) => handleDeleteNode(nodesToDel)}
-                onRelateNode={(newEdges: {[key: string]: Edge}) => handleRelateNode(newEdges)}
+                onRelateNode={(newEdges: { [key: string]: Edge }) => handleRelateNode(newEdges)}
                 onDeleteEdge={(edgesToDel: Edge[]) => handleDeleteEdge(edgesToDel)}
                 onDeleteOthers={(nodesToNotDel: Node[]) => handleDeleteOtherNodes(nodesToNotDel)}
               />
             </div>
           </AccordionDetails>
         </Accordion>
-        <Accordion style={{backgroundColor: "lightyellow"}}>
+        <Accordion sx={{backgroundColor: "lightyellow"}} disableGutters>
           <AccordionSummary expandIcon={<ExpandMoreIcon/>}>
             <Typography>Actions</Typography>
           </AccordionSummary>
-          <AccordionDetails>
+          <AccordionDetails sx={{padding: 0}}>
             <div id="actionsMenu-container">
               {network &&
-                <Actions
-                  network={network}
-                  selectedNodes={selectedNodes}
-                  actionCallback={({nodes, edges}: {nodes: Node[], edges: Edge[]}) => {
-                    console.log(nodes, edges);
-                    pushNodes(nodes);
-                    pushEdges(edges);
-                  }}
-                />
+              <Actions
+                network={network}
+                selectedNodes={selectedNodes}
+                actionCallback={({nodes, edges}: { nodes: Node[], edges: Edge[] }) => {
+                  console.log(nodes, edges);
+                  pushNodes(nodes);
+                  pushEdges(edges);
+                }}
+                onNodeChange={(node) => pushNodes([node])}
+              />
               }
             </div>
           </AccordionDetails>

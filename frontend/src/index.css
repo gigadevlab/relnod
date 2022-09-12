@@ -13,14 +13,12 @@ code {
 }
 
 #network-container {
-  grid-area: lt;
-  height: 85rem;
-  /*width: 1150px;*/
-  max-height: 57rem;
-  /*max-width: 1150px;*/
+  /*height: 85rem;*/
+  /*max-height: 57rem;*/
+  height: 58rem;
   position: relative;
   border: 1px solid lightgray;
-  margin: 1rem;
+  margin: 0.3rem;
 }
 
 /*#options-container {*/
@@ -34,24 +32,24 @@ code {
 
 #toolbox-container {
   /*grid-area: rt;*/
-  height: 300px;
+  height: 280px;
   /*width: 400px;*/
   max-height: 300px;
   /*max-width: 400px;*/
   overflow: auto;
   display: inline-block;
-  padding: 1rem;
+  padding: 0.5rem;
 }
 
 #actionsMenu-container {
   /*grid-area: rb;*/
-  height: 300px;
+  height: 280px;
   /*width: 400px;*/
   max-height: 300px;
   /*max-width: 400px;*/
   overflow: auto;
   display: inline-block;
-  padding: 1rem;
+  padding: 0.5rem;
 }
 
 .grid-container {

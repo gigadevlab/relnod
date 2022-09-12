@@ -3,17 +3,20 @@ import { Network } from 'vis-network';
 import { IconButton, Stack } from '@mui/material';
 
 import { actionService, typeActionService } from "../api/services";
-import { Action, Node, Edge } from '../constants/types';
+import { Action, Edge, Node } from '../constants/types';
 import DateRangePicker from './DateRangePicker';
 
 import WorkspacesIcon from '@mui/icons-material/Workspaces';
-import ZoomInIcon from '@mui/icons-material/ZoomIn';
+import MyLocationIcon from '@mui/icons-material/MyLocation';
+import LockOpenOutlinedIcon from '@mui/icons-material/LockOpenOutlined';
+import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 
 
 interface ActionsProps {
   network: Network;
   selectedNodes: Node[];
-  actionCallback?: ({nodes, edges}: {nodes: Node[], edges: Edge[]}) => void;
+  actionCallback?: ({nodes, edges}: { nodes: Node[], edges: Edge[] }) => void;
+  onNodeChange?: (node: Node) => void
 }
 
 const Actions = (props: ActionsProps) => {
@@ -48,7 +51,7 @@ const Actions = (props: ActionsProps) => {
               style={{display: "block", width: "100%", margin: "5px 0 0 0"}}
               onClick={() => {
                 actionService({
-                  callback: ({nodes, edges}: {nodes: Node[], edges: Edge[]}) => {
+                  callback: ({nodes, edges}: { nodes: Node[], edges: Edge[] }) => {
                     props.actionCallback?.({nodes, edges});
                   },
                   name: action.name,
@@ -86,13 +89,22 @@ const Actions = (props: ActionsProps) => {
                 <td>
                   <Stack direction={"row"}>
                     <IconButton
+                      disabled={node.physics}
+                      size={"small"}
+                      onClick={() => {
+                        node.physics = true;
+                        props.onNodeChange?.(node);
+                      }}
+                    >{!node.physics && <LockOpenOutlinedIcon fontSize={"inherit"}/>}
+                    </IconButton>
+                    <IconButton
                       size={"small"}
                       onClick={() => props.network.clusterByConnection(node.key)}
                     ><WorkspacesIcon fontSize={"inherit"}/></IconButton>
                     <IconButton
                       size={"small"}
                       onClick={() => props.network.focus(node.key)}
-                    ><ZoomInIcon  fontSize={"inherit"}/></IconButton>
+                    ><MyLocationIcon fontSize={"inherit"}/></IconButton>
                   </Stack>
                 </td>
               </tr>
