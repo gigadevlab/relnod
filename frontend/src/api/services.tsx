@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_BASE = "http://0.0.0.0";
+const API_BASE = "http://0.0.0.0:8000";
 
 export const MEDIA_URL = API_BASE + "/api/media/";
 
