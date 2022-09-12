@@ -22,8 +22,45 @@ You can define database further engines and views to make connection.
 ### config.py
 
 * ACTION_MAP: Defines the methods that will be show on frontend
+
+Ex:
+```python
+ACTION_MAP = {
+    "<action name>": [
+        {"name": '<action name>', "description": "<...>"}
+    ],
+    .
+    .
+    .
+}
+``` 
+
 * VIEW_MAP: Defines DB connection engines, DSNs, and table names that are mapped to
             "methods" in ACTION_MAP
+
+Ex:
+```python
+VIEW_MAP = {
+    "<action name>": {
+        "engine": <any chield of the BaseEngine>,
+        "dsn": {
+            "dbname": '<...>',
+            "user": '<...>',
+            "password": '<...>',
+            "host": '<...>',
+            "port": '<...>'
+        },
+        "table_name": '<...>'
+    },
+    .
+    .
+    .
+}
+```
+
+```
+Note: <action name> should be exist for both VIEW_MAP and ACTION_MAP!
+```
 
 ### engines.py
 
