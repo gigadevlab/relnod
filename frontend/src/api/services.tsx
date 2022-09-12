@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_BASE = "http://relnod_app";
+const API_BASE = "http://0.0.0.0";
 
 export const MEDIA_URL = API_BASE + "/api/media/";
 
