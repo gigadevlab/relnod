@@ -1,16 +1,18 @@
 import axios from "axios";
 
-export const MEDIA_URL = "http://127.0.0.1:8000/api/media/";
+const API_BASE = "http://relnod_app";
+
+export const MEDIA_URL = API_BASE + "/api/media/";
 
 export function infoService(callback: any) {
-  axios.get("http://127.0.0.1:8000/info/")
+  axios.get(API_BASE + "/info/")
     .then(function (response: any) {
       callback(response.data);
     });
 };
 
 export function typeInfoService({callback, pk}: any) {
-  var url = `http://127.0.0.1:8000/type-info/`;
+  var url = API_BASE + `/type-info/`;
 
   if (pk) {
     url += `${pk}/`;
@@ -23,7 +25,7 @@ export function typeInfoService({callback, pk}: any) {
 };
 
 export function typeActionService({callback, pk}: any) {
-  var url = `http://127.0.0.1:8000/type-action/`;
+  var url = API_BASE + `/type-action/`;
 
   if (pk) {
     url += `${pk}/`;
@@ -36,7 +38,7 @@ export function typeActionService({callback, pk}: any) {
 };
 
 export function actionService({callback, name, nodes, filter}: any) {
-  var url = `http://127.0.0.1:8000/action/${name}/?nodes=${JSON.stringify(nodes)}&filters=${JSON.stringify(filter)}`;
+  var url = API_BASE + `/action/${name}/?nodes=${JSON.stringify(nodes)}&filters=${JSON.stringify(filter)}`;
 
   // if (filter) {
   //   url += `${Object.keys(filter).map((key) => `&${key}=${filter[key]}`)}`
@@ -49,14 +51,14 @@ export function actionService({callback, name, nodes, filter}: any) {
 };
 
 export function relationService(callback: any) {
-  axios.get("http://127.0.0.1:8000/relation/")
+  axios.get(API_BASE + "/relation/")
     .then(function (response) {
       callback(response.data);
     });
 };
 
 export function ticketService() {
-  axios.get("http://127.0.0.1:8000/ticket/")
+  axios.get(API_BASE + "/ticket/")
     .then(function (response) {
       // handle success
       console.log(response);
