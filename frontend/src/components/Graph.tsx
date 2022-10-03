@@ -13,6 +13,7 @@ import { Edge, Node, NodeType } from '../constants/types';
 import { download } from "../utils/fileIO";
 
 import Actions from './Actions';
+import InfoBox from './InfoBox';
 import Toolbox from './Toolbox';
 
 import "../index.css";
@@ -335,6 +336,7 @@ const Graph = () => {
   return (
     <div>
       <div ref={networkContainer} id="network-container"/>
+      {selectedNodes[0] && <InfoBox node={selectedNodes[0]}/>}
       <Stack
         direction={"column"}
         // spacing={2}
@@ -413,7 +415,6 @@ const Graph = () => {
                 network={network}
                 selectedNodes={selectedNodes}
                 actionCallback={({nodes, edges}: { nodes: Node[], edges: Edge[] }) => {
-                  console.log(nodes, edges);
                   pushNodes(nodes);
                   pushEdges(edges);
                 }}
