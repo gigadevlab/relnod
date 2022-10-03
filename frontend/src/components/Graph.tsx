@@ -62,7 +62,7 @@ const Graph = () => {
   const pushEdges = (edges: Edge[]) => {
     let newEdgeMap: { [key: string]: Edge } = {};
 
-    edges.forEach((edge: Edge, ix: number) => {
+    edges.forEach((edge: Edge) => {
       edge.id = `${edge.from}-${edge.to}`;
       newEdgeMap[edge.id] = edge;
     });
