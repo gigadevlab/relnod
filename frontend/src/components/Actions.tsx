@@ -23,7 +23,10 @@ const Actions = (props: ActionsProps) => {
   const [dateRange, setDateRange] = React.useState<{ start?: Date, end?: Date }>({start: undefined, end: undefined});
 
   React.useEffect(() => {
-    if (props.selectedNodes.length === 1) {
+    const typeSet = new Set();
+    props.selectedNodes.forEach(node => typeSet.add(node.type.name));
+
+    if (typeSet.size === 1) {
       typeActionService({
         callback: (actions: Action[]) => {
           let nodes = props.selectedNodes.map((node) => {
@@ -59,7 +62,7 @@ const Actions = (props: ActionsProps) => {
                 })
               }}
             >
-              {action.name} | Description: {action.description}
+              {action.description}
             </button>
           ))
         }
