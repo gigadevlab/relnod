@@ -3,17 +3,20 @@ import { Accordion, AccordionDetails, AccordionSummary, Button, Stack, Typograph
 import vis, { Network } from 'vis-network';
 
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import CloudDownloadOutlinedIcon from '@mui/icons-material/CloudDownloadOutlined';
+import CloudUploadOutlinedIcon from '@mui/icons-material/CloudUploadOutlined';
+import DownloadIcon from '@mui/icons-material/Download';
+import UploadIcon from '@mui/icons-material/Upload';
 
-import { MEDIA_URL } from "../api/services";
-import { Edge, Node } from '../constants/types';
+import { MEDIA_URL, typeInfoService } from "../api/services";
+import { Edge, Node, NodeType } from '../constants/types';
+import { download } from "../utils/fileIO";
 
 import Actions from './Actions';
+import InfoBox from './InfoBox';
 import Toolbox from './Toolbox';
 
 import "../index.css";
-
-import CloudDownloadOutlinedIcon from '@mui/icons-material/CloudDownloadOutlined';
-import CloudUploadOutlinedIcon from '@mui/icons-material/CloudUploadOutlined';
 
 
 const Graph = () => {
@@ -27,6 +30,16 @@ const Graph = () => {
 
   const [selectedNodes, setSelectedNodes] = React.useState<any[]>([]);
   const [selectedEdges, setSelectedEdges] = React.useState<any[]>([]);
+
+  const [types, setTypes] = React.useState<NodeType[]>([]);
+
+  React.useEffect(() => {
+    typeInfoService({
+      callback: (types: NodeType[]) => {
+        setTypes(types)
+      }
+    });
+  }, []);
 
   const nodeArr2nodeMap = (nodes: Node[]) => {
     let newNodeMap: { [key: string]: Node } = {};
@@ -50,7 +63,7 @@ const Graph = () => {
   const pushEdges = (edges: Edge[]) => {
     let newEdgeMap: { [key: string]: Edge } = {};
 
-    edges.forEach((edge: Edge, ix: number) => {
+    edges.forEach((edge: Edge) => {
       edge.id = `${edge.from}-${edge.to}`;
       newEdgeMap[edge.id] = edge;
     });
@@ -58,21 +71,97 @@ const Graph = () => {
     setEdgeMap({...edgeMap, ...newEdgeMap});
   }
 
-
   const getFromLocal = () => {
-    let localNodeMapStr = window.localStorage.getItem("nodeMap");
-    let localEdgeMapStr = window.localStorage.getItem("edgeMap");
-
-    if (localNodeMapStr) {
-      console.log(JSON.parse(localNodeMapStr));
-      setNodeMap({...nodeMap, ...JSON.parse(localNodeMapStr)});
-    }
-    if (localEdgeMapStr) setEdgeMap({...edgeMap, ...JSON.parse(localEdgeMapStr)});
+    setNodeMap({...nodeMap, ...JSON.parse(window.localStorage.getItem("nodeMap") || "{}")});
+    setEdgeMap({...edgeMap, ...JSON.parse(window.localStorage.getItem("edgeMap") || "{}")});
   };
 
   const saveToLocal = () => {
     window.localStorage.setItem("nodeMap", JSON.stringify(nodeMap));
     window.localStorage.setItem("edgeMap", JSON.stringify(edgeMap));
+  };
+
+  const exportAsJSON = () => {
+    download(JSON.stringify({nodeMap: nodeMap, edgeMap: edgeMap}, null, 4), "data.json", "application/JSON");
+  };
+
+  const getFromJSON = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (!event.target.files) return;
+
+    let files = Array.from(event.target.files);
+    let reader = new FileReader()
+
+    reader.onload = event => {
+      const newData = JSON.parse(event.target?.result as string || "{nodeMap: {}, edgeMap: {}}");
+      setNodeMap({...nodeMap, ...newData.nodeMap});
+      setEdgeMap({...edgeMap, ...newData.edgeMap});
+    }
+    reader.readAsText(files[0]);
+  };
+
+  const exportAsCSV = () => {
+    let csvContent = "data:text/csv;charset=utf-8,";
+    csvContent += ["key1", "type1", "relation_name", "key2", "type2"].join(",") + "\r\n"
+
+    Object.values(edgeMap).map((edge) => {
+      let node1 = nodeMap[edge.to];
+      let node2 = nodeMap[edge.from];
+
+      if (node1 && node2) {
+        let row = [node1.key, node1.type.id, "", node2.key, node2.type.id].join(",");
+        csvContent += row + "\r\n";
+      }
+    });
+
+    let encodedUri = encodeURI(csvContent);
+    let link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "data.csv");
+    document.body.appendChild(link);
+    link.click();
+  }
+
+  const getFromCSV = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (!event.target.files) return;
+
+    let files = Array.from(event.target.files);
+    let reader = new FileReader()
+
+    reader.onload = event => {
+      let rows: string[][];
+      const headers = ["key1", "type1", "relation_name", "key2", "type2"];
+      const csvContent = event.target?.result as string || "";
+
+      rows = csvContent.split("\r\n").map(row => row.split(","));
+
+      if (rows[0].sort().toString() !== headers.sort().toString()) {
+        console.log("Invalid CSV data format!");
+        return;
+      }
+
+      let nodes: Node[] = [];
+      let edges: Edge[] = [];
+      let typeMap: {[key: number]: NodeType} = {};
+
+      types.forEach(type => typeMap[type.id] = type);
+
+      rows.slice(1).forEach((row) => {
+        let key1 = row[0];
+        let type1 = typeMap[parseInt(row[1])];
+        let key2 = row[3];
+        let type2 = typeMap[parseInt(row[4])];
+
+        if (key1 && key2 && type1 && type2) {
+          edges.push({from: key1, to: key2, id: ""});
+          nodes.push({id: key1, key: key1, type: type1, image: MEDIA_URL + type1?.icon});
+          nodes.push({id: key2, key: key2, type: type2, image: MEDIA_URL + type2?.icon});
+        }
+      });
+
+      pushNodes(nodes);
+      pushEdges(edges);
+    }
+    reader.readAsText(files[0]);
   };
 
   React.useEffect(() => {
@@ -233,10 +322,10 @@ const Graph = () => {
     setEdgeMap({...edgeMap, ...newEdges})
   }
 
-  const handleDeleteEdge = (egdesToDel: Edge[]) => {
+  const handleDeleteEdge = (edgesToDel: Edge[]) => {
     let newEdgeMap = {...edgeMap};
 
-    egdesToDel.forEach((edge) => {
+    edgesToDel.forEach((edge) => {
       delete newEdgeMap[edge.id];
     });
 
@@ -247,6 +336,7 @@ const Graph = () => {
   return (
     <div>
       <div ref={networkContainer} id="network-container"/>
+      {selectedNodes[0] && <InfoBox node={selectedNodes[0]}/>}
       <Stack
         direction={"column"}
         // spacing={2}
@@ -255,7 +345,7 @@ const Graph = () => {
           position: "absolute",
           border: "1px solid lightgray",
           float: "left",
-          top: "3%",
+          top: "2%",
           left: "calc(100% - 500px - 1rem)",
           width: "500px",
           transformOrigin: "top right",
@@ -272,6 +362,28 @@ const Graph = () => {
             startIcon={<CloudUploadOutlinedIcon/>}
             onClick={getFromLocal}
           >Get</Button>
+          <Button
+            variant={"outlined"}
+            startIcon={<DownloadIcon/>}
+            onClick={exportAsJSON}
+          >JSON</Button>
+          <Button
+            variant={"outlined"}
+            component={"label"}
+            startIcon={<UploadIcon/>}
+          >JSON<input hidden accept="application/JSON" type="file" onChange={
+            (event => getFromJSON(event))}/></Button>
+          <Button
+            variant={"outlined"}
+            startIcon={<DownloadIcon/>}
+            onClick={exportAsCSV}
+          >CSV</Button>
+          <Button
+            variant={"outlined"}
+            component={"label"}
+            startIcon={<UploadIcon/>}
+          >CSV<input hidden accept=".csv" type="file" onChange={
+            (event => getFromCSV(event))}/></Button>
         </Stack>
         <Accordion sx={{backgroundColor: "lightyellow"}} disableGutters>
           <AccordionSummary expandIcon={<ExpandMoreIcon/>}>
@@ -280,6 +392,7 @@ const Graph = () => {
           <AccordionDetails sx={{padding: 0}}>
             <div id="toolbox-container">
               <Toolbox
+                types={types}
                 selectedNodes={selectedNodes}
                 selectedEdges={selectedEdges}
                 onCreateNode={(node: Node) => handleCreateNode(node)}
@@ -302,7 +415,6 @@ const Graph = () => {
                 network={network}
                 selectedNodes={selectedNodes}
                 actionCallback={({nodes, edges}: { nodes: Node[], edges: Edge[] }) => {
-                  console.log(nodes, edges);
                   pushNodes(nodes);
                   pushEdges(edges);
                 }}

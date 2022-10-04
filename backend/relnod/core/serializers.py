@@ -23,13 +23,6 @@ class NodeSerializer(serializers.ModelSerializer):
             'id',
             'key',
             'type',
-        ]
-
-
-class BasicNodeSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Node
-        fields = [
-            'key',
-            'type',
+            'short_description',
+            'long_description',
         ]

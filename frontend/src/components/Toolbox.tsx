@@ -1,13 +1,19 @@
 import React from 'react';
 import { Avatar, Button, Grid, Stack, TextField } from '@mui/material';
 
-import { MEDIA_URL, typeInfoService } from "../api/services";
+import { MEDIA_URL } from "../api/services";
 import { Edge, Node, NodeType } from '../constants/types';
 
 import "../static/menu.css";
 
+import AddLinkIcon from '@mui/icons-material/AddLink';
+import LinkOffIcon from '@mui/icons-material/LinkOff';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import DeleteSweepOutlinedIcon from '@mui/icons-material/DeleteSweepOutlined';
+
 
 interface ToolboxProps {
+  types: NodeType[];
   selectedNodes: Node[];
   selectedEdges: Edge[];
   onCreateNode?: (node: Node) => void;
@@ -18,16 +24,7 @@ interface ToolboxProps {
 }
 
 const Toolbox = (props: ToolboxProps) => {
-  const [types, setTypes] = React.useState<NodeType[]>([]);
   const [key, setKey] = React.useState<string>("");
-
-  React.useEffect(() => {
-    typeInfoService({
-      callback: (types: NodeType[]) => {
-        setTypes(types)
-      }
-    });
-  }, []);
 
   const handleCreate = (type: NodeType) => {
     if (props.onCreateNode && key) {
@@ -80,7 +77,7 @@ const Toolbox = (props: ToolboxProps) => {
     <div>
       <Grid container spacing={1}>
         {
-          types.map((type) => (
+          props.types.map((type) => (
             <Grid item xs={3} key={type.name}>
               <Button
                 onClick={() => handleCreate(type)}
@@ -104,16 +101,28 @@ const Toolbox = (props: ToolboxProps) => {
               }}
             />
             {props.selectedNodes.length > 0 &&
-            <Button onClick={() => handleDelete(props.selectedNodes)}>Delete Selected Node(s)</Button>
+            <Button
+              startIcon={<DeleteOutlineIcon/>}
+              onClick={() => handleDelete(props.selectedNodes)}
+            >Delete Selected Node(s)</Button>
             }
             {props.selectedNodes.length > 0 &&
-            <Button onClick={() => handleDeleteOthers(props.selectedNodes)}>Delete Non-Selected Node(s)</Button>
+            <Button
+              startIcon={<DeleteSweepOutlinedIcon/>}
+              onClick={() => handleDeleteOthers(props.selectedNodes)}
+            >Delete Non-Selected Node(s)</Button>
             }
             {props.selectedNodes.length > 1 &&
-            <Button onClick={() => handleRelate(props.selectedNodes)}>Relate Node(s)</Button>
+            <Button
+              startIcon={<AddLinkIcon/>}
+              onClick={() => handleRelate(props.selectedNodes)}
+            >Relate Node(s)</Button>
             }
             {props.selectedEdges.length > 0 &&
-            <Button onClick={() => handleDerelate(props.selectedEdges)}>Delete Relation(s)</Button>
+            <Button
+              startIcon={<LinkOffIcon/>}
+              onClick={() => handleDerelate(props.selectedEdges)}
+            >Delete Relation(s)</Button>
             }
           </Stack>
         </Grid>

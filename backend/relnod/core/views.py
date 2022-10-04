@@ -12,18 +12,13 @@ class NodeTypeViewSet(viewsets.ModelViewSet):
     queryset = NodeType.objects.all().order_by('id')
     serializer_class = NodeTypeSerializer
     permission_classes = [permissions.AllowAny]
-    # lookup_field = 'key'
 
 
-class InfoViewSet(viewsets.ModelViewSet):
+class NodeViewSet(viewsets.ModelViewSet):
     queryset = Node.objects.all().order_by('id')
     serializer_class = NodeSerializer
     permission_classes = [permissions.AllowAny]
-
-
-class InfoAPIView:
-    def get(self, type, key):
-        pass
+    lookup_field = 'key'
 
 
 class ActionAPIView(views.APIView):
