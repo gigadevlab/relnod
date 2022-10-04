@@ -3,13 +3,6 @@ Node relation project
 
 ## Setup
 
-Unzip Node.js libraries
-
-```bash
-cd frontend
-unzip node_modules.zip
-```
-
 Run Docker containers
 
 ```bash
