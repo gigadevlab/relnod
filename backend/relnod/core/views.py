@@ -60,20 +60,6 @@ class TicketAPIView(views.APIView):
         return Response(data={"ticket": 123})
 
 
-class RelationAPIView(views.APIView):
-    permission_classes = [permissions.AllowAny]
-
-    def get(self, request, *args, **kwargs):
-        return Response(data=[
-            {"from": '10088201022', "to": 'Ankara'},
-            {"from": 'Istanbul', "to": 'Ramada'},
-            {"from": '06BGG742', "to": '10088201190'},
-        ])
-
-    def relations(self):
-        pass
-
-
 def rows2data(rows):
     edges = []
     nodes = []
