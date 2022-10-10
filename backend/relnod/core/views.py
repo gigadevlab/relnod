@@ -1,24 +1,39 @@
 import json
 
-from rest_framework import viewsets, views, permissions
+from rest_framework import views, permissions
 from rest_framework.response import Response
 
-from .models import *
-from .serializers import *
-from .config import VIEW_MAP, ACTION_MAP
+from .config import VIEW_MAP, ACTION_MAP, INFO_MAP, NODE_TYPE_MAP
 
 
-class NodeTypeViewSet(viewsets.ModelViewSet):
-    queryset = NodeType.objects.all().order_by('id')
-    serializer_class = NodeTypeSerializer
-    permission_classes = [permissions.AllowAny]
+class NodeTypeAPIView(views.APIView):
+    def get(self, request, *args, **kwargs):
+        type_id = kwargs.get('id', None)
+
+        if type_id:
+            return Response(data=NODE_TYPE_MAP[type_id])
+
+        return Response(data=NODE_TYPE_MAP.values())
 
 
-class NodeViewSet(viewsets.ModelViewSet):
-    queryset = Node.objects.all().order_by('id')
-    serializer_class = NodeSerializer
-    permission_classes = [permissions.AllowAny]
-    lookup_field = 'key'
+class NodeInfoAPIView(views.APIView):
+    def get(self, request, *args, **kwargs):
+        node_key = kwargs.get('key', None)
+        node_type = kwargs.get('type', None)
+
+        return self.info(node_type, node_key)
+
+    @staticmethod
+    def info(node_type, node_key):
+        view = (INFO_MAP[node_type])
+
+        keys = [node_key]
+        dsn = view["dsn"]
+        table_name = view["table_name"]
+
+        engine = view["engine"](dsn=dsn, table_name=table_name, keys=keys)
+
+        return Response(data=rows2info(engine.get_rows()))
 
 
 class ActionAPIView(views.APIView):
@@ -50,7 +65,7 @@ class ActionAPIView(views.APIView):
 
         engine = view["engine"](dsn=dsn, table_name=table_name, keys=keys)
 
-        return Response(data=rows2data(engine.get_rows()))
+        return Response(data=rows2graph(engine.get_rows()))
 
 
 class TicketAPIView(views.APIView):
@@ -60,13 +75,21 @@ class TicketAPIView(views.APIView):
         return Response(data={"ticket": 123})
 
 
-def rows2data(rows):
+def rows2graph(rows):
     edges = []
     nodes = []
 
     for row in rows:
         edges.append({"from": row["key1"], "to": row["key2"]})
-        nodes.append({"key": row["key1"], "type": NodeTypeSerializer(NodeType.objects.get(id=row["type1"])).data})
-        nodes.append({"key": row["key2"], "type": NodeTypeSerializer(NodeType.objects.get(id=row["type2"])).data})
+        nodes.append({"key": row["key1"], "type": NODE_TYPE_MAP[row["type1"]]})
+        nodes.append({"key": row["key2"], "type": NODE_TYPE_MAP[row["type2"]]})
 
     return {"nodes": nodes, "edges": edges}
+
+
+def rows2info(rows):
+    if len(rows) <= 0:
+        return {}
+
+    return {"short_description": rows[0]["short_description"], "long_description": rows[0]["long_description"]}
+

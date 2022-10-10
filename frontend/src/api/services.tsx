@@ -5,12 +5,8 @@ const API_BASE = "http://0.0.0.0:8000";
 export const MEDIA_URL = API_BASE + "/api/media/";
 
 
-export function nodeInfoService({callback, pk}: any) {
-  var url = API_BASE + `/node-info/`;
-
-  if (pk) {
-    url += `${pk}/`;
-  }
+export function nodeInfoService({callback, type, key}: any) {
+  var url = API_BASE + `/node-info/${type}/${key}/`;
 
   axios.get(url)
     .then(function (response) {

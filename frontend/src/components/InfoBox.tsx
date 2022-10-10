@@ -9,8 +9,8 @@ import { Node } from '../constants/types';
 
 const InfoBox = (props: { node: Node }) => {
   const [open, setOpen] = React.useState<boolean>(false);
-  const [shortDescription, setShortDescription] = React.useState<any>();
-  const [longDescription, setLongDescription] = React.useState<any>();
+  const [shortDescription, setShortDescription] = React.useState<string>("");
+  const [longDescription, setLongDescription] = React.useState<string>("");
 
   return (
     <div style={{position: "absolute", padding: "0.5rem", top: 0}}>
@@ -20,10 +20,11 @@ const InfoBox = (props: { node: Node }) => {
           onClick={() => {
             setOpen(true);
             nodeInfoService({
-              pk: props.node.key,
+              type: props.node.type.description,
+              key: props.node.key,
               callback: (res: { short_description: string, long_description: string }) => {
-                setShortDescription(res.short_description);
-                setLongDescription(res.long_description);
+                setShortDescription(res.short_description || "");
+                setLongDescription(res.long_description || "");
               }
             });
           }}

@@ -46,3 +46,20 @@ class PostgresEngine(BaseEngine):
         rows = cur.fetchall()
         cur.close()
         return rows
+
+
+class PostgresInfoEngine(BaseEngine):
+    def get_rows(self):
+        import psycopg
+
+        con = psycopg.connect(**self.dsn, row_factory=psycopg.rows.dict_row)
+        keys = ','.join([f"\'{key}\'" for key in self.keys])
+
+        cur = con.cursor()
+        cur.execute(f"""
+                SELECT short_description, long_description FROM \"{self.table_name}\"
+                WHERE key in ({keys});
+            """)
+        rows = cur.fetchall()
+        cur.close()
+        return rows
