@@ -1,6 +1,6 @@
 import json
 
-from rest_framework import views, permissions
+from rest_framework import views, permissions, status
 from rest_framework.response import Response
 
 from .config import VIEW_MAP, ACTION_MAP, INFO_MAP, NODE_TYPE_MAP
@@ -25,7 +25,10 @@ class NodeInfoAPIView(views.APIView):
 
     @staticmethod
     def info(node_type, node_key):
-        view = (INFO_MAP[node_type])
+        view = (INFO_MAP.get(node_type, None))
+
+        if view is None:
+            return Response(status=status.HTTP_204_NO_CONTENT)
 
         keys = [node_key]
         dsn = view["dsn"]
@@ -57,7 +60,10 @@ class ActionAPIView(views.APIView):
 
     @staticmethod
     def action(name, nodes, filters):
-        view = (VIEW_MAP[name])
+        view = (VIEW_MAP.get(name, None))
+
+        if view is None:
+            return Response(status=status.HTTP_204_NO_CONTENT)
 
         keys = [node['key'] for node in nodes]
         dsn = view["dsn"]
@@ -80,7 +86,7 @@ def rows2graph(rows):
     nodes = []
 
     for row in rows:
-        edges.append({"from": row["key1"], "to": row["key2"]})
+        edges.append({"from": row["key1"], "to": row["key2"], "label": row["relation_name"]})
         nodes.append({"key": row["key1"], "type": NODE_TYPE_MAP[row["type1"]]})
         nodes.append({"key": row["key2"], "type": NODE_TYPE_MAP[row["type2"]]})
 

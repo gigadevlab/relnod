@@ -56,7 +56,7 @@ const Graph = () => {
 
     nodes.forEach((node: Node) => {
       node.id = node.key;
-      node.label = node.key.toString();
+      node.label = `${node.key}\n${node.short_description}`;
       node.image = MEDIA_URL + node.type.icon;
       node.title = `${node.type.name} | ${node.key}`;
 
@@ -111,14 +111,24 @@ const Graph = () => {
 
   const exportAsCSV = () => {
     let csvContent = "data:text/csv;charset=utf-8,";
-    csvContent += ["key1", "type1", "relation_name", "key2", "type2"].join(",") + "\r\n"
+    csvContent += [
+      "key1", "type1",
+      "relation_name",
+      "key2", "type2",
+      "short_description_1", "short_description_2"
+    ].join(",") + "\r\n"
 
     Object.values(edgeMap).map((edge) => {
       let node1 = nodeMap[edge.to];
       let node2 = nodeMap[edge.from];
 
       if (node1 && node2) {
-        let row = [node1.key, node1.type.id, "", node2.key, node2.type.id].join(",");
+        let row = [
+          node1.key, node1.type.id,
+          edge.label,
+          node2.key, node2.type.id,
+          node1.short_description, node2.short_description
+        ].join(",");
         csvContent += row + "\r\n";
       }
     });
@@ -139,7 +149,7 @@ const Graph = () => {
 
     reader.onload = event => {
       let rows: string[][];
-      const headers = ["key1", "type1", "relation_name", "key2", "type2"];
+      const headers = ["key1", "type1", "relation_name", "key2", "type2", "short_description_1", "short_description_2"];
       const csvContent = event.target?.result as string || "";
 
       rows = csvContent.split("\r\n").map(row => row.split(","));
@@ -158,13 +168,28 @@ const Graph = () => {
       rows.slice(1).forEach((row) => {
         let key1 = row[0];
         let type1 = typeMap[parseInt(row[1])];
+        let relation_name = row[2];
         let key2 = row[3];
         let type2 = typeMap[parseInt(row[4])];
+        let short_description_1 = row[5];
+        let short_description_2 = row[6];
 
         if (key1 && key2 && type1 && type2) {
-          edges.push({from: key1, to: key2, id: ""});
-          nodes.push({id: key1, key: key1, type: type1, image: MEDIA_URL + type1?.icon});
-          nodes.push({id: key2, key: key2, type: type2, image: MEDIA_URL + type2?.icon});
+          edges.push({from: key1, to: key2, id: "", label: relation_name});
+          nodes.push({
+            id: key1,
+            key: key1,
+            type: type1,
+            image: MEDIA_URL + type1?.icon,
+            short_description: short_description_1,
+          });
+          nodes.push({
+            id: key2,
+            key: key2,
+            type: type2,
+            image: MEDIA_URL + type2?.icon,
+            short_description: short_description_2,
+          });
         }
       });
 
@@ -207,7 +232,8 @@ const Graph = () => {
         hideEdgesOnDrag: true,
         tooltipDelay: 200,
         multiselect: true,
-        hover: true
+        hover: true,
+        selectConnectedEdges: true,
       },
       physics: {
         enabled: true,
@@ -290,7 +316,7 @@ const Graph = () => {
       network.setData({nodes, edges});
       network.setOptions(options);
 
-      network.on('click', (properties) => {
+      network.on('select', (properties) => {
         let selNodes = properties.nodes.map((id: string) => nodeMap[id]);
         setSelectedNodes(selNodes);
 
@@ -352,7 +378,7 @@ const Graph = () => {
         <CircularProgress color="inherit" />
       </Backdrop>
       <div ref={networkContainer} id="network-container"/>
-      {selectedNodes[0] && <InfoBox node={selectedNodes[0]}/>}
+      {selectedNodes[0] && <InfoBox node={selectedNodes[0]} onNodeInfoFetched={node => handleCreateNode(node)}/>}
       <Stack
         direction={"column"}
         // spacing={2}

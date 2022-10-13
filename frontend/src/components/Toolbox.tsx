@@ -25,6 +25,7 @@ interface ToolboxProps {
 
 const Toolbox = (props: ToolboxProps) => {
   const [key, setKey] = React.useState<string>("");
+  const [relationName, setRelationName] = React.useState<string>("");
 
   const handleCreate = (type: NodeType) => {
     if (props.onCreateNode && key) {
@@ -59,7 +60,7 @@ const Toolbox = (props: ToolboxProps) => {
       nodes.forEach((node, ix) => {
         if (ix !== props.selectedNodes.length - 1) {
           let id = `${node.id}-${nodes[ix + 1].id}`;
-          newEdgeMap[id] = {id: id, from: node.id, to: nodes[ix + 1].id};
+          newEdgeMap[id] = {id: id, from: node.id, to: nodes[ix + 1].id, label: relationName};
         }
       })
 
@@ -78,7 +79,7 @@ const Toolbox = (props: ToolboxProps) => {
       <Grid container spacing={1}>
         {
           props.types.map((type) => (
-            <Grid item xs={3} key={type.name}>
+            <Grid item xs={4} key={type.name}>
               <Button
                 onClick={() => handleCreate(type)}
                 variant={"outlined"}
@@ -96,9 +97,14 @@ const Toolbox = (props: ToolboxProps) => {
               label="Key"
               size={"small"}
               value={key}
-              onChange={(event) => {
-                setKey(event.target.value);
-              }}
+              onChange={(event) => setKey(event.target.value)}
+            />
+            <TextField
+              type="text"
+              label="Relation Name"
+              size={"small"}
+              value={relationName}
+              onChange={(event) => setRelationName(event.target.value)}
             />
             {props.selectedNodes.length > 0 &&
             <Button
