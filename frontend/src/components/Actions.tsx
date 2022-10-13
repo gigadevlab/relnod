@@ -14,8 +14,9 @@ import LockOpenOutlinedIcon from '@mui/icons-material/LockOpenOutlined';
 interface ActionsProps {
   network: Network;
   selectedNodes: Node[];
+  actionCallFront?: () => void;
   actionCallback?: ({nodes, edges}: { nodes: Node[], edges: Edge[] }) => void;
-  onNodeChange?: (node: Node) => void
+  onNodeChange?: (node: Node) => void;
 }
 
 const Actions = (props: ActionsProps) => {
@@ -52,6 +53,7 @@ const Actions = (props: ActionsProps) => {
               key={action.name}
               style={{display: "block", width: "100%", margin: "5px 0 0 0"}}
               onClick={() => {
+                props.actionCallFront?.();
                 actionService({
                   callback: ({nodes, edges}: { nodes: Node[], edges: Edge[] }) => {
                     props.actionCallback?.({nodes, edges});

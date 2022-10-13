@@ -1,5 +1,14 @@
 import React from 'react';
-import { Accordion, AccordionDetails, AccordionSummary, Button, Stack, Typography } from '@mui/material';
+import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
+  Button,
+  Stack,
+  Typography,
+  Backdrop,
+  CircularProgress,
+} from '@mui/material';
 import vis, { Network } from 'vis-network';
 
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
@@ -32,6 +41,7 @@ const Graph = () => {
   const [selectedEdges, setSelectedEdges] = React.useState<any[]>([]);
 
   const [types, setTypes] = React.useState<NodeType[]>([]);
+  const [loading, setLoading] = React.useState<boolean>(false);
 
   React.useEffect(() => {
     typeInfoService({
@@ -335,6 +345,12 @@ const Graph = () => {
 
   return (
     <div>
+      <Backdrop
+        sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }}
+        open={loading}
+      >
+        <CircularProgress color="inherit" />
+      </Backdrop>
       <div ref={networkContainer} id="network-container"/>
       {selectedNodes[0] && <InfoBox node={selectedNodes[0]}/>}
       <Stack
@@ -414,9 +430,11 @@ const Graph = () => {
               <Actions
                 network={network}
                 selectedNodes={selectedNodes}
+                actionCallFront={() => setLoading(true)}
                 actionCallback={({nodes, edges}: { nodes: Node[], edges: Edge[] }) => {
                   pushNodes(nodes);
                   pushEdges(edges);
+                  setLoading(false);
                 }}
                 onNodeChange={(node) => pushNodes([node])}
               />
