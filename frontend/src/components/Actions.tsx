@@ -1,6 +1,8 @@
 import React from 'react';
 import { Network } from 'vis-network';
-import { IconButton, Stack } from '@mui/material';
+import { IconButton, Stack, TextField } from '@mui/material';
+
+import SearchIcon from '@mui/icons-material/Search';
 
 import { actionService, typeActionService } from "../api/services";
 import { Action, Edge, Node } from '../constants/types';
@@ -22,6 +24,7 @@ interface ActionsProps {
 const Actions = (props: ActionsProps) => {
   const [actions, setActions] = React.useState<Action[]>([]);
   const [dateRange, setDateRange] = React.useState<{ start?: Date, end?: Date }>({start: undefined, end: undefined});
+  const [searchKey, setSearchKey] = React.useState<string>("");
 
   React.useEffect(() => {
     const typeSet = new Set();
@@ -75,6 +78,16 @@ const Actions = (props: ActionsProps) => {
   return (
     <div>
       <h3>Selected Nodes</h3>
+      <Stack style={{margin: "20px", float: "left"}} direction={"row"} spacing={1}>
+        <TextField
+          type="text"
+          label="Search"
+          size={"small"}
+          value={searchKey}
+          onChange={(event) => setSearchKey(event.target.value)}
+        />
+        <IconButton onClick={() => props.network.focus(searchKey)}><SearchIcon/></IconButton>
+      </Stack>
       <table>
         <thead>
         <tr>
