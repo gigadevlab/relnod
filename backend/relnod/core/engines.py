@@ -4,7 +4,8 @@ class BaseEngine:
         self.table_name = table_name
         self.keys = keys
 
-    def get_rows(self):
+    # TODO: Apply change for all children
+    def get_rows(self, *args, **kwargs):
         pass
 
 
@@ -14,7 +15,7 @@ class SQLiteEngine(BaseEngine):
         col_names = [col[0] for col in cursor.description]
         return {key: value for key, value in zip(col_names, row)}
 
-    def get_rows(self):
+    def get_rows(self, *args, **kwargs):
         import sqlite3
 
         con = sqlite3.connect(self.dsn)
@@ -32,7 +33,7 @@ class SQLiteEngine(BaseEngine):
 
 
 class PostgresEngine(BaseEngine):
-    def get_rows(self):
+    def get_rows(self, *args, **kwargs):
         import psycopg
 
         con = psycopg.connect(**self.dsn, row_factory=psycopg.rows.dict_row)
@@ -49,7 +50,7 @@ class PostgresEngine(BaseEngine):
 
 
 class PostgresInfoEngine(BaseEngine):
-    def get_rows(self):
+    def get_rows(self, *args, **kwargs):
         import psycopg
 
         con = psycopg.connect(**self.dsn, row_factory=psycopg.rows.dict_row)

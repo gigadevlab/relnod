@@ -5,7 +5,7 @@ from django.conf.urls.static import static
 from .views import *
 
 urlpatterns = [
-    path(r'ticket/', TicketAPIView.as_view(), name='ticket'),
+    path(r'token/', TokenAPIView.as_view(), name='token'),
     path(r'type-action/<str:node_type>/', ActionAPIView.as_view(), name='type-action'),
     path(r'action/<str:name>/', ActionAPIView.as_view(), name='action'),
     path(r'node-info/<str:type>/<str:key>/', NodeInfoAPIView.as_view(), name='node-info'),

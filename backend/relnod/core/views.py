@@ -4,6 +4,7 @@ from rest_framework import views, permissions, status
 from rest_framework.response import Response
 
 from .config import VIEW_MAP, ACTION_MAP, INFO_MAP, NODE_TYPE_MAP
+from .templates import pre_process, post_process
 
 
 class NodeTypeAPIView(views.APIView):
@@ -18,29 +19,31 @@ class NodeTypeAPIView(views.APIView):
 
 class NodeInfoAPIView(views.APIView):
     def get(self, request, *args, **kwargs):
+        token = request.META.get('HTTP_AUTHORIZATION')
         node_key = kwargs.get('key', None)
         node_type = kwargs.get('type', None)
 
-        return self.info(node_type, node_key)
+        return self.info(node_type, node_key, token)
 
     @staticmethod
-    def info(node_type, node_key):
+    def info(node_type, node_key, token):
         view = (INFO_MAP.get(node_type, None))
 
         if view is None:
             return Response(status=status.HTTP_204_NO_CONTENT)
 
-        keys = [node_key]
+        keys = pre_process([node_key], token)
         dsn = view["dsn"]
         table_name = view["table_name"]
 
         engine = view["engine"](dsn=dsn, table_name=table_name, keys=keys)
 
-        return Response(data=rows2info(engine.get_rows()))
+        return Response(data=rows2info(post_process(engine.get_rows(), token)))
 
 
 class ActionAPIView(views.APIView):
     def get(self, request, *args, **kwargs):
+        token = request.META.get('HTTP_AUTHORIZATION')
         node_type = kwargs.get('node_type', None)
         name = kwargs.get('name', None)
 
@@ -49,7 +52,7 @@ class ActionAPIView(views.APIView):
         elif name:
             filters = request.query_params.get('filters')
             nodes = json.loads(request.query_params.get('nodes'))
-            return self.action(name, nodes, filters)
+            return self.action(name, nodes, token, filters=filters)
 
     @staticmethod
     def list(node_type):
@@ -59,26 +62,26 @@ class ActionAPIView(views.APIView):
         return Response(data=ACTION_MAP[node_type])
 
     @staticmethod
-    def action(name, nodes, filters):
+    def action(name, nodes, token, filters=None):
         view = (VIEW_MAP.get(name, None))
 
         if view is None:
             return Response(status=status.HTTP_204_NO_CONTENT)
 
-        keys = [node['key'] for node in nodes]
+        keys = pre_process([node['key'] for node in nodes], token)
         dsn = view["dsn"]
         table_name = view["table_name"]
 
         engine = view["engine"](dsn=dsn, table_name=table_name, keys=keys)
 
-        return Response(data=rows2graph(engine.get_rows()))
+        return Response(data=rows2graph(post_process(engine.get_rows(filters=filters), token)))
 
 
-class TicketAPIView(views.APIView):
+class TokenAPIView(views.APIView):
     permission_classes = [permissions.AllowAny]
 
     def get(self, request, *args, **kwargs):
-        return Response(data={"ticket": 123})
+        return Response(data={"token": 123})
 
 
 def rows2graph(rows):
@@ -87,8 +90,8 @@ def rows2graph(rows):
 
     for row in rows:
         edges.append({"from": row["key1"], "to": row["key2"], "label": row["relation_name"]})
-        nodes.append({"key": row["key1"], "type": NODE_TYPE_MAP[row["type1"]]})
-        nodes.append({"key": row["key2"], "type": NODE_TYPE_MAP[row["type2"]]})
+        nodes.append({"key": row["key1"], "type": NODE_TYPE_MAP.get(row["type1"], None)})
+        nodes.append({"key": row["key2"], "type": NODE_TYPE_MAP.get(row["type2"], None)})
 
     return {"nodes": nodes, "edges": edges}
 

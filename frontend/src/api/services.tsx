@@ -5,10 +5,29 @@ const API_BASE = "http://0.0.0.0:8000";
 export const MEDIA_URL = API_BASE + "/api/media/";
 
 
+const setToken = (tokenType: "Token", token: string) => {
+  localStorage.setItem('token', `${tokenType} ${token}`);
+};
+
+const getToken = () => {
+  let token = localStorage.getItem("token");
+  if(token && token.trim())
+    return token;
+  return "";
+};
+
+const getHeaderWithToken = () => {
+  return {
+    headers: {
+      'Authorization': getToken(),
+    }
+  };
+};
+
 export function nodeInfoService({callback, type, key}: any) {
   var url = API_BASE + `/node-info/${type}/${key}/`;
 
-  axios.get(url)
+  axios.get(url, getHeaderWithToken())
     .then(function (response) {
       callback(response.data);
     });
@@ -21,7 +40,7 @@ export function typeInfoService({callback, pk}: any) {
     url += `${pk}/`;
   }
 
-  axios.get(url)
+  axios.get(url, getHeaderWithToken())
     .then(function (response) {
       callback(response.data);
     });
@@ -34,7 +53,7 @@ export function typeActionService({callback, pk}: any) {
     url += `${pk}/`;
   }
 
-  axios.get(url)
+  axios.get(url, getHeaderWithToken())
     .then(function (response) {
       callback(response.data);
     });
@@ -43,23 +62,19 @@ export function typeActionService({callback, pk}: any) {
 export function actionService({callback, name, nodes, filter}: any) {
   var url = API_BASE + `/action/${name}/?nodes=${JSON.stringify(nodes)}&filters=${JSON.stringify(filter)}`;
 
-  axios.get(url)
+  axios.get(url, getHeaderWithToken())
     .then(function (response) {
       callback(response.data);
     });
 };
 
-export function ticketService() {
-  axios.get(API_BASE + "/ticket/")
+export function tokenService({callback}: any) {
+  axios.get(API_BASE + "/token/")
     .then(function (response) {
-      // handle success
-      console.log(response);
+      setToken("Token", response.data.token);
+      callback(true)
     })
     .catch(function (error) {
-      // handle error
-      console.log(error);
+      callback(false)
     })
-    .then(function () {
-      // always executed
-    });
 };
