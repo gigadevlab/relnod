@@ -34,7 +34,7 @@ const Graph = () => {
 
   const [options, setOptions] = React.useState<vis.Options>({});
 
-  const [nodeMap, setNodeMap] = React.useState<{ [key: string]: Node }>({});
+  const [nodeMap, _setNodeMap] = React.useState<{ [key: string]: Node }>({});
   const [edgeMap, setEdgeMap] = React.useState<{ [key: string]: Edge }>({});
 
   const [selectedNodes, setSelectedNodes] = React.useState<any[]>([]);
@@ -51,12 +51,17 @@ const Graph = () => {
     });
   }, []);
 
+  const setNodeMap = (newNodeMap: { [key: string]: Node }) => {
+    Object.keys(nodeMap).forEach(key => delete newNodeMap[key]);
+    _setNodeMap({...nodeMap, ...newNodeMap})
+  }
+
   const nodeArr2nodeMap = (nodes: Node[]) => {
     let newNodeMap: { [key: string]: Node } = {};
 
     nodes.forEach((node: Node) => {
       node.id = node.key;
-      node.label = `${node.key}\n${node.short_description}`;
+      node.label = `${node.key}\n${node.short_description === undefined && ""}`;
       node.image = MEDIA_URL + node.type.icon;
       node.title = `${node.type.name} | ${node.key}`;
 
@@ -67,7 +72,7 @@ const Graph = () => {
   }
 
   const pushNodes = (nodes: Node[]) => {
-    setNodeMap({...nodeMap, ...nodeArr2nodeMap(nodes)});
+    setNodeMap(nodeArr2nodeMap(nodes));
   }
 
   const pushEdges = (edges: Edge[]) => {
@@ -82,7 +87,7 @@ const Graph = () => {
   }
 
   const getFromLocal = () => {
-    setNodeMap({...nodeMap, ...JSON.parse(window.localStorage.getItem("nodeMap") || "{}")});
+    setNodeMap(JSON.parse(window.localStorage.getItem("nodeMap") || "{}"));
     setEdgeMap({...edgeMap, ...JSON.parse(window.localStorage.getItem("edgeMap") || "{}")});
   };
 
@@ -103,7 +108,7 @@ const Graph = () => {
 
     reader.onload = event => {
       const newData = JSON.parse(event.target?.result as string || "{nodeMap: {}, edgeMap: {}}");
-      setNodeMap({...nodeMap, ...newData.nodeMap});
+      setNodeMap(newData.nodeMap);
       setEdgeMap({...edgeMap, ...newData.edgeMap});
     }
     reader.readAsText(files[0]);
@@ -323,6 +328,7 @@ const Graph = () => {
         let selEdges = properties.edges.map((id: number) => edgeMap[id]);
         setSelectedEdges(selEdges);
       });
+
       network.on('dragEnd', (properties) => {
         let dragNodeMap: { [key: string]: Node } = {};
 
@@ -330,13 +336,25 @@ const Graph = () => {
           dragNodeMap[id] = {...nodeMap[id], ...network.getPosition(id), physics: false}
         })
 
-        if (Object.entries(dragNodeMap).length !== 0) setNodeMap({...nodeMap, ...dragNodeMap});
+        if (Object.entries(dragNodeMap).length !== 0) _setNodeMap({...nodeMap, ...dragNodeMap});
+      });
+
+      network.on('startStabilizing', (properties) => {
+        setLoading(true);
+        return properties;
+      });
+
+      network.on('afterDrawing', (properties) => {
+        setLoading(false);
+        return properties;
       });
     }
   }, [network, nodeMap, edgeMap, options]);
 
-  const handleCreateNode = (node: Node) => {
-    setNodeMap({...nodeMap, [node.key]: node});
+  const handleCreateNode = (nodes: Node[]) => {
+    let newNodeMap: { [key: string]: Node } = {}
+    nodes.forEach((node) => newNodeMap[node.key] = node)
+    setNodeMap(newNodeMap);
   }
 
   const handleDeleteNode = (nodesToDel: Node[]) => {
@@ -346,12 +364,12 @@ const Graph = () => {
       delete newNodeMap[node.id];
     });
 
-    setNodeMap(newNodeMap);
+    _setNodeMap(newNodeMap);
     setSelectedNodes([]);
   }
 
   const handleDeleteOtherNodes = (nodesToNotDel: Node[]) => {
-    setNodeMap(nodeArr2nodeMap(nodesToNotDel));
+    _setNodeMap(nodeArr2nodeMap(nodesToNotDel));
   }
 
   const handleRelateNode = (newEdges: { [key: string]: Edge }) => {
@@ -378,7 +396,7 @@ const Graph = () => {
         <CircularProgress color="inherit" />
       </Backdrop>
       <div ref={networkContainer} id="network-container"/>
-      {selectedNodes[0] && <InfoBox node={selectedNodes[0]} onNodeInfoFetched={node => handleCreateNode(node)}/>}
+      {selectedNodes[0] && <InfoBox node={selectedNodes[0]} onNodeInfoFetched={node => handleCreateNode([node])}/>}
       <Stack
         direction={"column"}
         // spacing={2}
@@ -437,7 +455,7 @@ const Graph = () => {
                 types={types}
                 selectedNodes={selectedNodes}
                 selectedEdges={selectedEdges}
-                onCreateNode={(node: Node) => handleCreateNode(node)}
+                onCreateNode={(nodes: Node[]) => handleCreateNode(nodes)}
                 onDeleteNode={(nodesToDel: Node[]) => handleDeleteNode(nodesToDel)}
                 onRelateNode={(newEdges: { [key: string]: Edge }) => handleRelateNode(newEdges)}
                 onDeleteEdge={(edgesToDel: Edge[]) => handleDeleteEdge(edgesToDel)}

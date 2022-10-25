@@ -16,7 +16,7 @@ interface ToolboxProps {
   types: NodeType[];
   selectedNodes: Node[];
   selectedEdges: Edge[];
-  onCreateNode?: (node: Node) => void;
+  onCreateNode?: (nodes: Node[]) => void;
   onDeleteNode?: (nodes: Node[]) => void;
   onDeleteOthers?: (nodes: Node[]) => void;
   onRelateNode?: (edges: { [key: string]: Edge }) => void;
@@ -24,20 +24,20 @@ interface ToolboxProps {
 }
 
 const Toolbox = (props: ToolboxProps) => {
-  const [key, setKey] = React.useState<string>("");
+  const [keys, setKeys] = React.useState<string>("");
   const [relationName, setRelationName] = React.useState<string>("");
 
   const handleCreate = (type: NodeType) => {
-    if (props.onCreateNode && key) {
-      let node: Node = {
+    if (props.onCreateNode && keys) {
+      let nodes: Node[] = keys.split("\n").map(key => { return {
         id: key,
         key: key,
         type: type,
         label: key,
         image: MEDIA_URL + type.icon
-      };
+      }});
 
-      props.onCreateNode(node);
+      props.onCreateNode(nodes);
     }
   };
 
@@ -93,11 +93,12 @@ const Toolbox = (props: ToolboxProps) => {
         <Grid item xs={12}>
           <Stack direction="column" spacing={1}>
             <TextField
+              multiline
               type="text"
               label="Key"
               size={"small"}
-              value={key}
-              onChange={(event) => setKey(event.target.value)}
+              value={keys}
+              onChange={(event) => setKeys(event.target.value)}
             />
             <TextField
               type="text"
