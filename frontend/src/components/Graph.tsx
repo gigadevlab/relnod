@@ -8,6 +8,7 @@ import {
   Typography,
   Backdrop,
   CircularProgress,
+  Divider,
 } from '@mui/material';
 import vis, { Network } from 'vis-network';
 
@@ -16,6 +17,8 @@ import CloudDownloadOutlinedIcon from '@mui/icons-material/CloudDownloadOutlined
 import CloudUploadOutlinedIcon from '@mui/icons-material/CloudUploadOutlined';
 import DownloadIcon from '@mui/icons-material/Download';
 import UploadIcon from '@mui/icons-material/Upload';
+import UndoIcon from '@mui/icons-material/Undo';
+import RedoIcon from '@mui/icons-material/Redo';
 
 import { MEDIA_URL, typeInfoService } from "../api/services";
 import { Edge, Node, NodeType } from '../constants/types';
@@ -32,6 +35,8 @@ const Graph = () => {
   const [network, setNetwork] = React.useState<Network>();
   const networkContainer = React.useRef<HTMLDivElement>(null);
 
+  const [history, setHistory] = React.useState<{ nodeMap: { [key: string]: Node }, edgeMap: { [key: string]: Edge }, }[]>([]);
+  const [historyIndex, setHistoryIndex] = React.useState<number>(0);
   const [options, setOptions] = React.useState<vis.Options>({});
 
   const [nodeMap, _setNodeMap] = React.useState<{ [key: string]: Node }>({});
@@ -204,6 +209,28 @@ const Graph = () => {
     reader.readAsText(files[0]);
   };
 
+  const undo = () => {
+    if (network && historyIndex > 0) {
+      let newIndex = historyIndex - 1;
+      let nodes: Node[] = Object.values(history[newIndex].nodeMap);
+      let edges: Edge[] = Object.values(history[newIndex].edgeMap);
+
+      network.setData({nodes, edges});
+      setHistoryIndex(newIndex);
+    }
+  }
+
+  const redo = () => {
+    if (network && historyIndex < history.length - 1) {
+      let newIndex = historyIndex + 1;
+      let nodes: Node[] = Object.values(history[newIndex].nodeMap);
+      let edges: Edge[] = Object.values(history[newIndex].edgeMap);
+
+      network.setData({nodes, edges});
+      setHistoryIndex(newIndex);
+    }
+  }
+
   React.useEffect(() => {
     setOptions({
       autoResize: true,
@@ -351,6 +378,16 @@ const Graph = () => {
     }
   }, [network, nodeMap, edgeMap, options]);
 
+  React.useEffect(() => {
+    let newHistory = [...history];
+    newHistory.push({ edgeMap: edgeMap, nodeMap: nodeMap });
+    if (history.length > 20) {
+      delete newHistory[0];
+    }
+    setHistoryIndex(history.length);
+    setHistory(newHistory);
+  }, [nodeMap, edgeMap])
+
   const handleCreateNode = (nodes: Node[]) => {
     let newNodeMap: { [key: string]: Node } = {}
     nodes.forEach((node) => newNodeMap[node.key] = node)
@@ -399,7 +436,6 @@ const Graph = () => {
       {selectedNodes[0] && <InfoBox node={selectedNodes[0]} onNodeInfoFetched={node => handleCreateNode([node])}/>}
       <Stack
         direction={"column"}
-        // spacing={2}
         sx={{
           backgroundColor: "lightyellow",
           position: "absolute",
@@ -444,6 +480,21 @@ const Graph = () => {
             startIcon={<UploadIcon/>}
           >CSV<input hidden accept=".csv" type="file" onChange={
             (event => getFromCSV(event))}/></Button>
+        </Stack>
+        <Divider/>
+        <Stack direction={"row"} justifyContent={"center"} spacing={1} padding={1}>
+          <Button
+            disabled={historyIndex === 0}
+            variant={"outlined"}
+            startIcon={<UndoIcon/>}
+            onClick={undo}
+          >Undo</Button>
+          <Button
+            disabled={historyIndex === history.length - 1}
+            variant={"outlined"}
+            startIcon={<RedoIcon/>}
+            onClick={redo}
+          >Redo</Button>
         </Stack>
         <Accordion sx={{backgroundColor: "lightyellow"}} disableGutters>
           <AccordionSummary expandIcon={<ExpandMoreIcon/>}>
